@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jira Issue Durations</title>
+  <style>
+    body { 
+      font-family: Arial; 
+      padding: 20px; 
+      background: #f5f5f5; 
+    }
+    .container { 
+      max-width: 1400px; 
+      margin: 0 auto; 
+    }
+    h2 { 
+      color: #333; 
+    }
+    
+    .controls {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .controls label {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    
+    .controls select {
+      padding: 8px 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 8px; 
+    }
+    th { 
+      background: #4a90e2; 
+      color: white;
+    }
+    tbody tr:hover { 
+      background: #f9f9f9; 
+    }
+    
+    .gantt-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    
+    .gantt-chart {
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+    
+    .gantt-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      position: relative;
+    }
+    
+    .task-name {
+      width: 200px;
+      font-size: 12px;
+      padding-right: 10px;
+      font-weight: bold;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .timeline {
+      flex: 1;
+      position: relative;
+      height: 30px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      min-width: 600px;
+    }
+    
+    .task-bar {
+      position: absolute;
+      height: 100%;
+      background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: all 0.3s;
+    }
+    
+    .task-bar:hover {
+      background: linear-gradient(135deg, #357abd 0%, #2868a8 100%);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .stats {
+      margin-top: 20px;
+      padding: 15px;
+      background: #e8f4fd;
+      border-radius: 6px;
+      border-left: 4px solid #4a90e2;
+    }
+    
+    .stats h4 {
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+    
+    .stats p {
+      margin: 5px 0;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Jira Issues – Created vs Due</h2>
+
+  <div class="controls">
+    <label for="assignee-select">Select Assignee for Gantt Chart:</label>
+    <select id="assignee-select">
+      <option value="">-- Choose Assignee --</option>
+    </select>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Project Key</th>
+        <th>Issue Type</th>
+        <th>Summary</th>
+        <th>Description</th>
+        <th>Priority</th>
+        <th>Status</th>
+        <th>Assignee</th>
+        <th>Created</th>
+        <th>Due Date</th>
+        <th>Duration (days)</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+
+  <div class="gantt-section" id="gantt-section" style="display:none;">
+    <h3>Gantt Chart - <span id="selected-assignee"></span></h3>
+    <div class="stats" id="stats"></div>
+    <div class="gantt-chart" id="gantt-chart"></div>
+  </div>
+</div>
+
+<script>
+let allIssues = [];
+
+fetch("/api/issues")
+  .then(res => res.json())
+  .then(data => {
+    allIssues = data;
+    displayTable(allIssues);
+    populateAssigneeDropdown(allIssues);
+  })
+  .catch(err => console.error('Error:', err));
+
+function displayTable(data) {
+  const tbody = document.getElementById("table-body");
+  tbody.innerHTML = '';
+  
+  data.forEach(issue => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${issue.key}</td>
+      <td>${issue.issueType}</td>
+      <td>${issue.summary}</td>
+      <td>${issue.description}</td>
+      <td>${issue.priority}</td>
+      <td>${issue.status}</td>
+      <td>${issue.assignee}</td>
+      <td>${new Date(issue.created).toLocaleDateString()}</td>
+      <td>${issue.due ? new Date(issue.due).toLocaleDateString() : "-"}</td>
+      <td>${issue.duration !== "" ? issue.duration : "-"}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function populateAssigneeDropdown(issues) {
+  const assignees = [...new Set(issues.map(i => i.assignee))].sort();
+  const select = document.getElementById("assignee-select");
+  
+  assignees.forEach(assignee => {
+    const option = document.createElement("option");
+    option.value = assignee;
+    option.textContent = assignee;
+    select.appendChild(option);
+  });
+}
+
+document.getElementById("assignee-select").addEventListener("change", function(e) {
+  const assignee = e.target.value;
+  
+  if (!assignee) {
+    document.getElementById("gantt-section").style.display = "none";
+    return;
+  }
+  
+  const assigneeTasks = allIssues.filter(i => i.assignee === assignee && i.due);
+  
+  if (assigneeTasks.length === 0) {
+    alert("No tasks with due dates found for this assignee.");
+    return;
+  }
+  
+  document.getElementById("selected-assignee").textContent = assignee;
+  document.getElementById("gantt-section").style.display = "block";
+  
+  createGanttChart(assigneeTasks, assignee);
+});
+
+function createGanttChart(tasks, assignee) {
+  const ganttChart = document.getElementById("gantt-chart");
+  const stats = document.getElementById("stats");
+  
+  ganttChart.innerHTML = '';
+  
+  // Calculate date range
+  const dates = tasks.map(t => new Date(t.created).getTime());
+  const dueDates = tasks.filter(t => t.due).map(t => new Date(t.due).getTime());
+  const allDates = [...dates, ...dueDates];
+  
+  const minDate = new Date(Math.min(...allDates));
+  const maxDate = new Date(Math.max(...allDates));
+  const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
+  
+  // Calculate stats
+  const totalTasks = tasks.length;
+  const totalHours = tasks.reduce((sum, t) => sum + (t.duration || 0), 0) * 8; // Assuming 8 hours per day
+  const avgDuration = Math.round(tasks.reduce((sum, t) => sum + (t.duration || 0), 0) / totalTasks);
+  
+  stats.innerHTML = `
+    <h4>📊 Summary</h4>
+    <p><strong>Total Tasks:</strong> ${totalTasks}</p>
+    <p><strong>Total Hours:</strong> ${totalHours} hours</p>
+    <p><strong>Average Duration:</strong> ${avgDuration} days</p>
+    <p><strong>Timeline:</strong> ${minDate.toLocaleDateString()} to ${maxDate.toLocaleDateString()}</p>
+  `;
+  
+  // Create gantt bars
+  tasks.forEach(task => {
+    const row = document.createElement("div");
+    row.className = "gantt-row";
+    
+    const taskName = document.createElement("div");
+    taskName.className = "task-name";
+    taskName.textContent = task.key + ": " + (task.summary.substring(0, 25) + "...");
+    taskName.title = task.summary;
+    
+    const timeline = document.createElement("div");
+    timeline.className = "timeline";
+    
+    const startDate = new Date(task.created);
+    const endDate = task.due ? new Date(task.due) : new Date(task.created);
+    
+    const startOffset = Math.ceil((startDate - minDate) / (1000 * 60 * 60 * 24));
+    const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) || 1;
+    
+    const leftPercent = (startOffset / totalDays) * 100;
+    const widthPercent = (duration / totalDays) * 100;
+    
+    const taskBar = document.createElement("div");
+    taskBar.className = "task-bar";
+    taskBar.style.left = leftPercent + "%";
+    taskBar.style.width = widthPercent + "%";
+    taskBar.textContent = duration + "d";
+    taskBar.title = `${task.key}\n${task.summary}\nCreated: ${startDate.toLocaleDateString()}\nDue: ${endDate.toLocaleDateString()}\nDuration: ${duration} days`;
+    
+    timeline.appendChild(taskBar);
+    row.appendChild(taskName);
+    row.appendChild(timeline);
+    ganttChart.appendChild(row);
+  });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,48 @@
+Project key,Issue Type,Summary,Description,Priority,Status,Assignee,Created,Due date
+PROJ,Task,"Investigate payment retry failures","Users report failed retries during peak traffic.",High,Open,Amit Sharma,2025-12-01T09:00:00Z,2025-12-05
+PROJ,Task,"Reduce dashboard TTFB","Initial dashboard load is slower than SLA.",Medium,Open,Rohit Verma,2025-12-01T10:00:00Z,2025-12-10
+PROJ,Task,"Fix nightly data sync break","Scheduled sync fails intermittently at midnight.",High,Open,Neha Gupta,2025-12-01T11:00:00Z,2025-12-04
+PROJ,Task,"Create Q1 delivery plan","Draft milestones and dependencies for Q1.",Low,Open,Rahul Mehta,2025-12-01T12:00:00Z,2025-12-20
+PROJ,Task,"Resolve failed backup snapshot","Cloud snapshot creation failed.",High,Open,Pooja Iyer,2025-12-02T09:00:00Z,2025-12-06
+
+PROJ,Task,"Refactor session middleware","Simplify and modularize auth middleware.",Medium,Open,Amit Sharma,2025-12-02T10:00:00Z,2025-12-18
+PROJ,Task,"Triage vulnerability scan report","Automated scan flagged multiple CVEs.",High,Open,Rohit Verma,2025-12-02T11:00:00Z,2025-12-07
+PROJ,Task,"Stabilize flaky integration tests","CI failures caused by unstable mocks.",Medium,Open,Neha Gupta,2025-12-02T12:00:00Z,2025-12-09
+PROJ,Task,"Investigate DB connection saturation","Connection pool exhaustion observed.",High,Open,Rahul Mehta,2025-12-03T09:00:00Z,2025-12-07
+PROJ,Task,"Optimize report generation queries","Large reports exceed timeout limits.",Medium,Open,Pooja Iyer,2025-12-03T10:00:00Z,2025-12-15
+
+PROJ,Task,"Handle external API throttling","Partner API rate limits exceeded.",Medium,Open,Amit Sharma,2025-12-03T11:00:00Z,2025-12-10
+PROJ,Task,"Fix memory spike in worker service","Background workers exceed memory caps.",High,Open,Rohit Verma,2025-12-03T12:00:00Z,2025-12-08
+PROJ,Task,"Automate deployment rollback","Rollback requires manual intervention.",Medium,Open,Neha Gupta,2025-12-04T09:00:00Z,2025-12-06
+PROJ,Task,"Resolve failing health probes","Kubernetes readiness probe failing.",High,Open,Rahul Mehta,2025-12-04T10:00:00Z,2025-12-07
+PROJ,Task,"Add audit trail for role changes","Missing logs for permission updates.",Medium,Open,Pooja Iyer,2025-12-04T11:00:00Z,2025-12-19
+
+PROJ,Task,"Clear message queue backlog","Queue depth exceeds safe threshold.",High,Open,Amit Sharma,2025-12-04T12:00:00Z,2025-12-06
+PROJ,Task,"Rewrite outdated API docs","Docs don’t reflect current behavior.",Low,Open,Rohit Verma,2025-12-05T09:00:00Z,2025-12-22
+PROJ,Task,"Handle auto-escalated incident","Incident promoted due to SLA breach.",High,Open,Neha Gupta,2025-12-05T10:00:00Z,2025-12-07
+PROJ,Task,"Repair broken scheduler job","Job stopped after infra update.",Medium,Open,Rahul Mehta,2025-12-05T11:00:00Z,2025-12-12
+PROJ,Task,"Improve debug logging","Logs insufficient for prod debugging.",Low,Open,Pooja Iyer,2025-12-05T12:00:00Z,2025-12-21
+
+PROJ,Task,"Fix cache stampede issue","Concurrent cache misses overload DB.",High,Open,Amit Sharma,2025-12-06T09:00:00Z,2025-12-10
+PROJ,Task,"Run monthly DB maintenance","Cleanup unused indexes and tables.",Low,Open,Rohit Verma,2025-12-06T10:00:00Z,2025-12-23
+PROJ,Task,"Resolve frontend build regression","Webpack build fails on prod branch.",Medium,Open,Neha Gupta,2025-12-06T11:00:00Z,2025-12-14
+PROJ,Task,"Apply emergency security patch","Critical patch pending rollout.",High,Open,Rahul Mehta,2025-12-06T12:00:00Z,2025-12-11
+PROJ,Task,"Rotate expired application logs","Disk usage nearing limit.",Low,Open,Pooja Iyer,2025-12-07T09:00:00Z,2025-12-24
+
+PROJ,Task,"Increase unit test coverage","Coverage below quality gate.",Medium,Open,Amit Sharma,2025-12-07T10:00:00Z,2025-12-18
+PROJ,Task,"Reduce CI pipeline runtime","Build times exceed 20 minutes.",Medium,Open,Rohit Verma,2025-12-07T11:00:00Z,2025-12-17
+PROJ,Task,"Roll out feature toggle","Gradual rollout needed for new feature.",Medium,Open,Neha Gupta,2025-12-07T12:00:00Z,2025-12-10
+PROJ,Task,"Patch recurring null reference bug","Crash reported in error logs.",High,Open,Rahul Mehta,2025-12-08T09:00:00Z,2025-12-12
+PROJ,Task,"Refactor billing calculation logic","Legacy logic hard to maintain.",Medium,Open,Pooja Iyer,2025-12-08T10:00:00Z,2025-12-20
+
+PROJ,Task,"Verify automated backups","Backup integrity needs validation.",Low,Open,Amit Sharma,2025-12-08T11:00:00Z,2025-12-26
+PROJ,Task,"Improve user-facing error text","Errors confuse non-technical users.",Low,Open,Rohit Verma,2025-12-08T12:00:00Z,2025-12-22
+PROJ,Task,"Investigate CPU utilization spikes","CPU usage hits 95% intermittently.",High,Open,Neha Gupta,2025-12-09T09:00:00Z,2025-12-11
+PROJ,Task,"Fix autoscaling policy thresholds","Scaling triggers too late.",High,Open,Rahul Mehta,2025-12-09T10:00:00Z,2025-12-13
+PROJ,Task,"Optimize image delivery pipeline","Large images slow page loads.",Medium,Open,Pooja Iyer,2025-12-09T11:00:00Z,2025-12-19
+
+PROJ,Task,"Mitigate third-party service outage","External provider downtime impact.",High,Open,Amit Sharma,2025-12-09T12:00:00Z,2025-12-11
+PROJ,Task,"Build system metrics dashboard","Lack of visibility into infra health.",Medium,Open,Rohit Verma,2025-12-10T09:00:00Z,2025-12-23
+PROJ,Task,"Respond to automated security alert","Suspicious activity detected.",High,Open,Neha Gupta,2025-12-10T10:00:00Z,2025-12-12
+PROJ,Task,"Fix pagination edge case","Last page results incorrect.",Medium,Open,Rahul Mehta,2025-12-10T11:00:00Z,2025-12-16
+PROJ,Task,"Restore email delivery service","Emails delayed or dropped.",High,Open,Pooja Iyer,2025-12-10T12:00:00Z,2025-12-15
