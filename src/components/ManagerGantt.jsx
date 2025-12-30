@@ -163,6 +163,8 @@ export default function ManagerGantt({ tasks }) {
           {/* Grid lines and bars */}
           {assignees.map((assignee) => {
             const colors = colorMap[assignee.name]
+            const sortedTasks = [...assignee.tasks].sort((a, b) => a._start - b._start)
+            
             return (
               <div key={assignee.name} className="flex border-b last:border-b-0">
                 <div className="w-48 p-3 font-medium bg-gray-50 border-r flex-shrink-0">{assignee.name}</div>
@@ -173,6 +175,9 @@ export default function ManagerGantt({ tasks }) {
                       <div key={idx} className="border-r border-gray-300" style={{ width: `${cellWidth}px` }}></div>
                     ))}
                   </div>
+
+                  {/* Free time blocks (between tasks) */}
+                  
 
                   {/* Task bars */}
                   <div className="relative h-full">
@@ -188,11 +193,27 @@ export default function ManagerGantt({ tasks }) {
                         duration = Math.max(1, (task._end - task._start) / (1000 * 60 * 60 * 24 * 7))
                         duration = Math.max(0.2, duration)
                       } else if (viewType === 'month') {
+                        // For month view, calculate position based on month start dates
+                        const minDateMonthStart = new Date(minDate)
+                        minDateMonthStart.setDate(1)
+                        
                         const taskStartMonth = new Date(task._start)
                         taskStartMonth.setDate(1)
-                        startOffset = Math.max(0, (taskStartMonth - minDate) / (1000 * 60 * 60 * 24 * 30.44))
-                        duration = Math.max(1, (task._end - task._start) / (1000 * 60 * 60 * 24 * 30.44))
-                        duration = Math.max(0.3, duration)
+                        
+                        const taskEndMonth = new Date(task._end)
+                        taskEndMonth.setDate(1)
+                        
+                        // Calculate months from start
+                        const monthDiff = (taskStartMonth.getFullYear() - minDateMonthStart.getFullYear()) * 12 + 
+                                         (taskStartMonth.getMonth() - minDateMonthStart.getMonth())
+                        
+                        startOffset = Math.max(0, monthDiff)
+                        
+                        // Calculate duration in months
+                        const endMonthDiff = (taskEndMonth.getFullYear() - taskStartMonth.getFullYear()) * 12 + 
+                                            (taskEndMonth.getMonth() - taskStartMonth.getMonth())
+                        
+                        duration = Math.max(0.5, endMonthDiff + 1)
                       }
 
                       const leftPx = startOffset * cellWidth
