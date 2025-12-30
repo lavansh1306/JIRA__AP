@@ -1,11 +1,64 @@
 let allIssues = [];
 
-fetch("http://localhost:3000/api/issues")
-  .then(res => res.json())
-  .then(data => {
-    allIssues = data;
+// CSV Parser function
+function parseCSV(csvText) {
+  const lines = csvText.split('\n').filter(line => line.trim());
+  if (lines.length === 0) return [];
+
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const data = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i]
+      .split(',')
+      .map(v => v.trim().replace(/^"|"$/g, ''));
+    
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] || '';
+    });
+    data.push(row);
+  }
+
+  return data;
+}
+
+// Fetch and parse CSV
+fetch("./jira_events (1).csv")
+  .then(res => res.text())
+  .then(csvText => {
+    const parsedData = parseCSV(csvText);
+    
+    allIssues = parsedData.map(row => {
+      const created = new Date(row.Created || row["Created"]);
+      const dueDate = row["Due date"] || row["DueDate"];
+      const due = dueDate ? new Date(dueDate) : null;
+
+      let duration = "";
+      if (due && !isNaN(due.getTime()) && !isNaN(created.getTime())) {
+        duration = Math.ceil((due - created) / (1000 * 60 * 60 * 24));
+      }
+
+      return {
+        key: row["Project key"] || "-",
+        issueType: row["Issue Type"] || "-",
+        summary: row["Summary"] || "-",
+        description: row["Description"] || "-",
+        priority: row["Priority"] || "-",
+        status: row["Status"] || "-",
+        assignee: row["Assignee"] || "Unassigned",
+        created: created.toISOString(),
+        due: due ? due.toISOString() : null,
+        duration
+      };
+    });
+    
     displayTable(allIssues);
     populateAssigneeDropdown(allIssues);
+  })
+  .catch(err => {
+    console.error("Error loading CSV:", err);
+    alert("Failed to load CSV file");
   });
 
 function displayTable(data) {
