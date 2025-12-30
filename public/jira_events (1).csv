@@ -1,15 +1,20 @@
 Project key,Issue Type,Summary,Description,Priority,Status,Assignee,Created,Due date
-PROJ,Task,"Fix login redirect bug","Users redirected incorrectly after login.",High,Open,Amit Sharma,2025-12-01T09:00:00Z,2025-12-01
-PROJ,Task,"Update API response schema","Minor schema update for consistency.",Medium,Open,Amit Sharma,2025-12-04T09:00:00Z,2025-12-04
+PROJ,Task,"Payment retry bug investigation","Analyze retry failures in payment service.",High,Open,Amit Sharma,2025-12-01T09:00:00Z,2025-12-03
+PROJ,Task,"Cache inconsistency fix","Resolve cache mismatch issues.",Medium,Open,Amit Sharma,2025-12-05T09:00:00Z,2025-12-07
+PROJ,Task,"Optimize auth token validation","Improve performance of token validation.",Medium,Open,Amit Sharma,2025-12-10T09:00:00Z,2025-12-13
 
-PROJ,Task,"Investigate slow dashboard load","Dashboard widgets load slowly.",Medium,Open,Rohit Verma,2025-12-01T10:00:00Z,2025-12-01
-PROJ,Task,"Optimize dashboard queries","Improve DB queries for dashboard.",Medium,Open,Rohit Verma,2025-12-03T10:00:00Z,2025-12-03
+PROJ,Task,"Dashboard UI cleanup","Fix alignment and spacing issues.",Low,Open,Rohit Verma,2025-12-01T10:00:00Z,2025-12-02
+PROJ,Task,"API response optimization","Reduce payload size and latency.",Medium,Open,Rohit Verma,2025-12-04T10:00:00Z,2025-12-06
+PROJ,Task,"Search query tuning","Improve relevance and speed of search.",Medium,Open,Rohit Verma,2025-12-09T10:00:00Z,2025-12-11
 
-PROJ,Task,"Fix email notification bug","Emails not sent on password reset.",High,Open,Neha Gupta,2025-12-02T09:00:00Z,2025-12-02
-PROJ,Task,"Add email retry logic","Retry failed email sends.",Medium,Open,Neha Gupta,2025-12-05T09:00:00Z,2025-12-05
+PROJ,Task,"Nightly data sync fix","Resolve intermittent sync failures.",High,Open,Neha Gupta,2025-12-02T09:00:00Z,2025-12-04
+PROJ,Task,"ETL error handling improvement","Add retries and better logging.",Medium,Open,Neha Gupta,2025-12-07T09:00:00Z,2025-12-09
+PROJ,Task,"Report generation bug fix","Fix incorrect totals in reports.",Medium,Open,Neha Gupta,2025-12-12T09:00:00Z,2025-12-14
 
-PROJ,Task,"Prepare sprint demo","Prepare slides and demo flow.",Low,Open,Rahul Mehta,2025-12-01T11:00:00Z,2025-12-01
-PROJ,Task,"Collect stakeholder feedback","Post-demo feedback collection.",Low,Open,Rahul Mehta,2025-12-04T11:00:00Z,2025-12-04
+PROJ,Task,"Sprint planning for Q1","Define scope and milestones.",Low,Open,Rahul Mehta,2025-12-01T11:00:00Z,2025-12-03
+PROJ,Task,"Dependency mapping update","Update service dependency docs.",Low,Open,Rahul Mehta,2025-12-06T11:00:00Z,2025-12-08
+PROJ,Task,"Release coordination","Coordinate release activities.",Medium,Open,Rahul Mehta,2025-12-11T11:00:00Z,2025-12-13
 
-PROJ,Task,"Fix mobile UI overflow","Text overflows on small screens.",Medium,Open,Pooja Iyer,2025-12-02T10:00:00Z,2025-12-02
-PROJ,Task,"Improve button accessibility","Improve contrast and focus states.",Low,Open,Pooja Iyer,2025-12-06T10:00:00Z,2025-12-06
+PROJ,Task,"Backup verification","Validate integrity of backups.",Low,Open,Pooja Iyer,2025-12-02T10:00:00Z,2025-12-03
+PROJ,Task,"Log rotation setup","Configure automated log rotation.",Low,Open,Pooja Iyer,2025-12-05T10:00:00Z,2025-12-06
+PROJ,Task,"Monitoring alert tuning","Reduce false positive alerts.",Medium,Open,Pooja Iyer,2025-12-09T10:00:00Z,2025-12-11
