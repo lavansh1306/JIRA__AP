@@ -4,8 +4,19 @@ function formatDate(d) {
   return d.toLocaleDateString()
 }
 
+const assigneeColors = [
+  { from: 'from-blue-500', to: 'to-blue-600' },
+  { from: 'from-red-500', to: 'to-red-600' },
+  { from: 'from-green-500', to: 'to-green-600' },
+  { from: 'from-purple-500', to: 'to-purple-600' },
+  { from: 'from-yellow-500', to: 'to-yellow-600' },
+  { from: 'from-pink-500', to: 'to-pink-600' },
+  { from: 'from-indigo-500', to: 'to-indigo-600' },
+  { from: 'from-cyan-500', to: 'to-cyan-600' },
+]
+
 export default function ManagerGantt({ tasks }) {
-  const { lanes, minDate, maxDate, totalDays } = useMemo(() => {
+  const { assignees, minDate, maxDate, totalDays, colorMap } = useMemo(() => {
     const byAssignee = {}
     let min = null
     let max = null
@@ -33,43 +44,27 @@ export default function ManagerGantt({ tasks }) {
 
     const totalDays = Math.ceil((max - min) / (1000 * 60 * 60 * 24)) + 1
 
-    // For each assignee, compute stacking rows to avoid overlap
-    const lanes = Object.keys(byAssignee).sort().map(name => {
-      const items = byAssignee[name]
-        .slice()
-        .sort((a, b) => a._start - b._start)
-
-      const rows = [] // each row is array of tasks that don't overlap
-
-      items.forEach(item => {
-        // find a row where this item doesn't overlap the last task
-        let placed = false
-        for (let r = 0; r < rows.length; r++) {
-          const last = rows[r][rows[r].length - 1]
-          if (item._start > last._end) {
-            rows[r].push(item)
-            placed = true
-            break
-          }
-        }
-        if (!placed) rows.push([item])
-      })
-
-      // flatten rows into items with row index
-      const tasksWithRow = []
-      rows.forEach((rowArr, rowIdx) => {
-        rowArr.forEach(it => tasksWithRow.push({ ...it, _row: rowIdx }))
-      })
-
-      const laneHeight = Math.max(1, rows.length)
-
-      return { name, tasks: tasksWithRow, laneHeight }
+    const assigneeNames = Object.keys(byAssignee).sort()
+    const colorMap = {}
+    assigneeNames.forEach((name, idx) => {
+      colorMap[name] = assigneeColors[idx % assigneeColors.length]
     })
 
-    return { lanes, minDate: min, maxDate: max, totalDays }
+    const assignees = assigneeNames.map(name => ({
+      name,
+      tasks: byAssignee[name]
+    }))
+
+    return { assignees, minDate: min, maxDate: max, totalDays, colorMap }
   }, [tasks])
 
-  if (!lanes.length) return <div className="p-6 bg-white rounded shadow">No tasks to show</div>
+  if (!assignees.length) return <div className="p-6 bg-white rounded shadow">No tasks to show</div>
+
+  // Generate date markers for header
+  const dateMarkers = []
+  for (let i = 0; i < totalDays; i += 7) {
+    dateMarkers.push(new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000))
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
@@ -81,37 +76,62 @@ export default function ManagerGantt({ tasks }) {
       </div>
 
       <div className="overflow-x-auto border rounded">
-        <div className="min-w-[900px]">
-          {lanes.map((lane, idx) => {
-            const barHeight = 28
-            const gap = 8
-            const minHeight = Math.max(64, lane.laneHeight * (barHeight + gap) + 16)
-            return (
-              <div key={lane.name} className="flex items-start border-b last:border-b-0">
-                <div className="w-48 p-3 font-medium bg-gray-50">{lane.name}</div>
-                <div className="relative flex-1 p-3" style={{ minHeight }}>
-                  {/* tasks stacked by row, placed vertically based on _row */}
-                  {lane.tasks.map((task, tIdx) => {
-                    const startOffset = Math.ceil((task._start - minDate) / (1000 * 60 * 60 * 24))
-                    const duration = Math.max(1, Math.ceil((task._end - task._start) / (1000 * 60 * 60 * 24)))
-                    const leftPercent = (startOffset / totalDays) * 100
-                    const widthPercent = (duration / totalDays) * 100
-                    const top = 8 + task._row * (barHeight + gap)
+        <div className="min-w-max">
+          {/* Header with date markers */}
+          <div className="flex border-b bg-gray-100 sticky top-0">
+            <div className="w-48 p-3 font-medium bg-gray-50 border-r flex-shrink-0"></div>
+            <div className="relative flex-1" style={{ width: `${totalDays * 40}px` }}>
+              <div className="absolute top-0 left-0 right-0 h-full flex">
+                {dateMarkers.map((date, idx) => (
+                  <div
+                    key={idx}
+                    className="border-r text-xs text-gray-600 p-1 text-center"
+                    style={{ width: '280px' }}
+                  >
+                    {formatDate(date)}
+                  </div>
+                ))}
+              </div>
+              <div className="h-12"></div>
+            </div>
+          </div>
 
-                    return (
-                      <div
-                        key={tIdx}
-                        className="absolute"
-                        style={{ left: `${leftPercent}%`, width: `${widthPercent}%`, top: `${top}px` }}
-                        title={`${task.key} — ${task.summary}\n${new Date(task._start).toLocaleDateString()} → ${new Date(task._end).toLocaleDateString()}`}
-                      >
-                        <div className="px-3 py-2 rounded shadow-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-medium opacity-95 hover:opacity-100 truncate">
-                          <div className="truncate max-w-full">{task.key} — {task.summary}</div>
-                          <div className="text-[10px] opacity-80">{new Date(task._start).toLocaleDateString()} → {new Date(task._end).toLocaleDateString()}</div>
+          {/* Grid lines and bars */}
+          {assignees.map((assignee) => {
+            const colors = colorMap[assignee.name]
+            return (
+              <div key={assignee.name} className="flex border-b last:border-b-0">
+                <div className="w-48 p-3 font-medium bg-gray-50 border-r flex-shrink-0">{assignee.name}</div>
+                <div className="relative flex-1 p-2" style={{ width: `${totalDays * 40}px`, minHeight: '80px' }}>
+                  {/* Grid background */}
+                  <div className="absolute top-0 left-0 right-0 bottom-0 flex opacity-20">
+                    {Array.from({ length: dateMarkers.length }).map((_, idx) => (
+                      <div key={idx} className="border-r border-gray-300" style={{ width: '280px' }}></div>
+                    ))}
+                  </div>
+
+                  {/* Task bars */}
+                  <div className="relative h-full">
+                    {assignee.tasks.map((task, tIdx) => {
+                      const startOffset = Math.max(0, (task._start - minDate) / (1000 * 60 * 60 * 24))
+                      const duration = Math.max(1, (task._end - task._start) / (1000 * 60 * 60 * 24))
+                      const leftPx = startOffset * 40
+                      const widthPx = Math.max(30, duration * 40)
+
+                      return (
+                        <div
+                          key={tIdx}
+                          className={`absolute top-2 rounded shadow-sm bg-gradient-to-r ${colors.from} ${colors.to} text-white text-xs font-medium opacity-90 hover:opacity-100 overflow-hidden`}
+                          style={{ left: `${leftPx}px`, width: `${widthPx}px`, height: '32px' }}
+                          title={`${task.key} — ${task.summary}\n${formatDate(task._start)} → ${formatDate(task._end)}`}
+                        >
+                          <div className="px-2 py-1 truncate h-full flex items-center">
+                            <span className="truncate">{task.key}</span>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             )
