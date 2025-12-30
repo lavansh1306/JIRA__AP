@@ -1,55 +1,20 @@
 Project key,Issue Type,Summary,Description,Priority,Status,Assignee,Created,Due date
-ACME-101,Bug,"Login timeout on Safari 17","Users stuck on auth page with 503 errors",High,In Progress,Amit Sharma,2025-11-18T08:30:00Z,2025-12-02
-ACME-102,Feature,"Dark mode redesign","Full UI rewrite for WCAG AAA compliance",High,Open,Pooja Iyer,2025-11-10T10:00:00Z,2025-12-18
-ACME-103,Task,"Upgrade to Node 22 LTS","Migrate runtime; benchmark performance",Medium,Done,Rohit Verma,2025-11-01T09:00:00Z,2025-11-25
-ACME-104,Bug,"Cart crashes on bulk select","JS error when selecting >100 items",High,In Progress,Rahul Mehta,2025-11-27T14:00:00Z,2025-12-01
-ACME-105,Feature,"2FA with Authenticator app","Support TOTP via Google/Microsoft apps",Medium,In Progress,Neha Gupta,2025-11-22T11:00:00Z,2025-12-09
-ACME-106,Task,"Refactor payment service","Extract duplicate billing logic",Low,Open,Amit Sharma,2025-11-24T13:00:00Z,2025-12-21
-ACME-107,Bug,"Rate limiter off by one error","Blocks legitimate 151st request",High,Open,Rohit Verma,2025-11-28T09:15:00Z,2025-12-03
-ACME-108,Feature,"Slack notifications for alerts","Push task updates to Slack channels",Medium,Open,Pooja Iyer,2025-11-20T12:30:00Z,2025-12-25
-ACME-109,Task,"Performance audit report","Profile app with SpeedCurve; write findings",Low,In Progress,Amit Sharma,2025-11-19T10:00:00Z,2025-12-11
-ACME-110,Bug,"Search broken on mobile","Keyboard blocks results on iPhone",Medium,Open,Neha Gupta,2025-11-26T15:00:00Z,2025-12-05
-ACME-111,Feature,"Stripe Connect for sellers","Allow vendors to receive direct payments",High,In Progress,Amit Sharma,2025-11-12T08:00:00Z,2025-12-22
-ACME-112,Task,"Database indexing optimization","Add missing indexes for slow queries",Medium,Done,Rahul Mehta,2025-11-05T09:00:00Z,2025-11-20
-ACME-113,Bug,"Invoice PDF breaks with unicode","Accented chars cause corruption",Low,Open,Rohit Verma,2025-11-29T16:00:00Z,2025-12-08
-ACME-114,Feature,"Webhook retries with exponential backoff","Improve reliability for webhook consumers",High,Open,Neha Gupta,2025-11-15T11:00:00Z,2025-12-19
-ACME-115,Task,"Write security policy doc","Document our ISMS and threat model",Low,Open,Pooja Iyer,2025-11-23T09:00:00Z,2025-12-28
-ACME-116,Bug,"Memory leak in worker threads","Node process grows 1GB/week",High,In Progress,Amit Sharma,2025-11-25T14:30:00Z,2025-12-06
-ACME-117,Feature,"Internationalization (i18n)","Add Spanish, French, German, Japanese",High,Open,Rahul Mehta,2025-11-13T10:00:00Z,2025-12-27
-ACME-118,Task,"Setup CloudFlare WAF rules","Block OWASP top 10 exploits",Medium,In Progress,Pooja Iyer,2025-11-21T13:00:00Z,2025-12-12
-ACME-119,Bug,"Double charge on network retry","Race condition in payment confirmation",High,Open,Neha Gupta,2025-11-30T08:00:00Z,2025-12-04
-ACME-120,Feature,"Real-time collaboration with CRDT","Live editing for shared documents",High,Open,Amit Sharma,2025-11-08T11:00:00Z,2025-12-26
-ACME-121,Task,"Migrate to TypeScript","Rewrite backend with full type safety",Medium,Open,Rahul Mehta,2025-11-16T09:30:00Z,2026-01-15
-ACME-122,Bug,"GraphQL query allows data leak","Missing authorization in resolver",High,In Progress,Pooja Iyer,2025-11-27T10:00:00Z,2025-12-02
-ACME-123,Feature,"AI-powered product recommendations","ML model for personalization",High,Open,Neha Gupta,2025-11-11T14:00:00Z,2025-12-29
-ACME-124,Task,"Performance test suite with k6","Load test at 10k RPS capacity",Medium,Open,Amit Sharma,2025-11-28T12:00:00Z,2025-12-16
-ACME-125,Bug,"OOM crash on data export","Large CSV generation fails",High,Open,Rahul Mehta,2025-11-29T15:30:00Z,2025-12-07
-ACME-126,Feature,"White-label admin portal","Reseller controls branding, users, reports",Medium,In Progress,Rohit Verma,2025-11-14T10:00:00Z,2026-01-10
-ACME-127,Task,"Disaster recovery drill","Test RTO/RPO for production systems",Low,Done,Pooja Iyer,2025-11-02T08:00:00Z,2025-11-15
-PROJ-201,Bug,"Cache invalidation timing bug","Stale data served for 60 seconds post-update",High,In Progress,Neha Gupta,2025-11-30T14:00:00Z,2025-12-04
-PROJ-202,Task,"Implement OpenTelemetry tracing","Full distributed tracing for microservices",Medium,Open,Rahul Mehta,2025-11-19T09:00:00Z,2025-12-28
-PROJ-203,Feature,"SMS-based two-factor auth","TOTP backup method for inaccessible authenticators",Low,Open,Amit Sharma,2025-11-28T10:30:00Z,2026-01-08
-PROJ-204,Bug,"Duplicate webhook deliveries","Retries happening even after success",High,Open,Rohit Verma,2025-11-21T11:00:00Z,2025-12-05
-PROJ-205,Task,"Refactor monolithic auth service","Split into separate microservice components",Medium,In Progress,Neha Gupta,2025-11-11T08:30:00Z,2025-12-30
-PROJ-206,Feature,"Scheduled email digest","Weekly/daily aggregated task summaries",Low,Open,Pooja Iyer,2025-11-27T13:00:00Z,2026-01-12
-PROJ-207,Bug,"Pagination cursor broken for large datasets","Offset method fails beyond 100k records",High,In Progress,Amit Sharma,2025-11-24T14:30:00Z,2025-12-08
-PROJ-208,Task,"Implement request rate limiting","Prevent API abuse with token bucket algorithm",Medium,Open,Rahul Mehta,2025-11-16T10:00:00Z,2025-12-19
-PROJ-209,Feature,"Custom domain support","Customers can use their own domain names",High,Open,Rohit Verma,2025-11-13T09:00:00Z,2026-01-06
-PROJ-210,Bug,"Session expiration not working","Users stay logged in beyond timeout window",High,Open,Neha Gupta,2025-11-22T15:00:00Z,2025-12-02
-PROJ-211,Task,"Write API integration tests","Cover 80% of endpoint combinations",Medium,In Progress,Amit Sharma,2025-11-17T11:30:00Z,2025-12-17
-PROJ-212,Feature,"Automated compliance reporting","Generate SOC2/ISO compliance documents",High,Open,Pooja Iyer,2025-11-09T08:00:00Z,2025-12-31
-PROJ-213,Bug,"Search ranking algorithm biased","Results show irrelevant matches first",Medium,Open,Rahul Mehta,2025-11-25T16:00:00Z,2025-12-07
-PROJ-214,Task,"Setup infrastructure monitoring","Prometheus/Grafana stack deployment",Medium,In Progress,Neha Gupta,2025-11-20T09:30:00Z,2025-12-14
-PROJ-215,Feature,"Bulk user import tool","CSV upload for enterprise onboarding",Low,Open,Rohit Verma,2025-11-14T10:00:00Z,2025-12-23
-PROJ-216,Bug,"File upload size limit enforced incorrectly","Some files exceed limit but upload successfully",Medium,In Progress,Amit Sharma,2025-11-23T12:00:00Z,2025-12-09
-PROJ-217,Task,"Kubernetes migration complete","Decommission old VM infrastructure",High,Open,Pooja Iyer,2025-11-06T08:00:00Z,2025-12-10
-PROJ-218,Feature,"Mobile app push notifications","Real-time alerts on iOS/Android",High,Open,Neha Gupta,2025-11-12T11:00:00Z,2026-01-04
-PROJ-219,Bug,"Concurrency issue in transaction handling","Deadlock under heavy concurrent load",High,In Progress,Rohit Verma,2025-11-26T13:30:00Z,2025-12-03
-PROJ-220,Task,"Optimize database query performance","Reduce average query time from 200ms to 50ms",Medium,Open,Amit Sharma,2025-11-28T14:00:00Z,2025-12-20
-PROJ-221,Feature,"Advanced search filters","Full-text search with facets and aggregations",High,Open,Rahul Mehta,2025-11-09T12:00:00Z,2026-01-02
-PROJ-222,Bug,"Authentication token expiry not enforced","Tokens valid indefinitely after creation",High,In Progress,Neha Gupta,2025-11-27T11:00:00Z,2025-12-05
-PROJ-223,Task,"Load balancer configuration tuning","Optimize connection pooling and timeouts",Medium,Open,Rohit Verma,2025-11-22T10:00:00Z,2025-12-25
-PROJ-224,Feature,"Audit log export functionality","Download compliance audit trail as CSV",Low,Open,Pooja Iyer,2025-11-18T14:30:00Z,2026-01-20
-PROJ-225,Bug,"Memory corruption in C extension","Valgrind detects heap corruption",High,In Progress,Amit Sharma,2025-11-20T13:00:00Z,2025-12-04
-PROJ-226,Task,"Data retention policy implementation","Auto-delete records older than 7 years",Medium,Open,Rahul Mehta,2025-11-15T09:00:00Z,2025-12-22
-PROJ-227,Feature,"GraphQL schema documentation","Auto-generated docs from schema definitions",Low,Open,Neha Gupta,2025-11-14T11:00:00Z,2026-01-18
+PROJ,Task,"Payment retry bug investigation","Analyze retry failures in payment service.",High,Open,Amit Sharma,2025-12-01T09:00:00Z,2025-12-03
+PROJ,Task,"Cache inconsistency fix","Resolve cache mismatch issues.",Medium,Open,Amit Sharma,2025-12-05T09:00:00Z,2025-12-07
+PROJ,Task,"Optimize auth token validation","Improve performance of token validation.",Medium,Open,Amit Sharma,2025-12-10T09:00:00Z,2025-12-13
+
+PROJ,Task,"Dashboard UI cleanup","Fix alignment and spacing issues.",Low,Open,Rohit Verma,2025-12-01T10:00:00Z,2025-12-02
+PROJ,Task,"API response optimization","Reduce payload size and latency.",Medium,Open,Rohit Verma,2025-12-04T10:00:00Z,2025-12-06
+PROJ,Task,"Search query tuning","Improve relevance and speed of search.",Medium,Open,Rohit Verma,2025-12-09T10:00:00Z,2025-12-11
+
+PROJ,Task,"Nightly data sync fix","Resolve intermittent sync failures.",High,Open,Neha Gupta,2025-12-02T09:00:00Z,2025-12-04
+PROJ,Task,"ETL error handling improvement","Add retries and better logging.",Medium,Open,Neha Gupta,2025-12-07T09:00:00Z,2025-12-09
+PROJ,Task,"Report generation bug fix","Fix incorrect totals in reports.",Medium,Open,Neha Gupta,2025-12-12T09:00:00Z,2025-12-14
+
+PROJ,Task,"Sprint planning for Q1","Define scope and milestones.",Low,Open,Rahul Mehta,2025-12-01T11:00:00Z,2025-12-03
+PROJ,Task,"Dependency mapping update","Update service dependency docs.",Low,Open,Rahul Mehta,2025-12-06T11:00:00Z,2025-12-08
+PROJ,Task,"Release coordination","Coordinate release activities.",Medium,Open,Rahul Mehta,2025-12-11T11:00:00Z,2025-12-13
+
+PROJ,Task,"Backup verification","Validate integrity of backups.",Low,Open,Pooja Iyer,2025-12-02T10:00:00Z,2025-12-03
+PROJ,Task,"Log rotation setup","Configure automated log rotation.",Low,Open,Pooja Iyer,2025-12-05T10:00:00Z,2025-12-06
+PROJ,Task,"Monitoring alert tuning","Reduce false positive alerts.",Medium,Open,Pooja Iyer,2025-12-09T10:00:00Z,2025-12-11
