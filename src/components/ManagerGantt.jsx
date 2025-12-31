@@ -17,9 +17,16 @@ const assigneeColors = [
 
 export default function ManagerGantt({ tasks }) {
   const [viewType, setViewType] = useState('day') // 'day', 'week', 'month'
-  const [zoom, setZoom] = useState(1) // zoom multiplier
+  const [zoom, setZoom] = useState(1.6) // zoom multiplier (160% default)
 
   const { assignees, minDate, maxDate, totalUnits, dateMarkers, colorMap } = useMemo(() => {
+    // Helper to normalize date to midnight (start of day)
+    const normalizeDate = (d) => {
+      const normalized = new Date(d)
+      normalized.setHours(0, 0, 0, 0)
+      return normalized
+    }
+
     const byAssignee = {}
     let min = null
     let max = null
@@ -28,8 +35,8 @@ export default function ManagerGantt({ tasks }) {
       const assignee = t.assignee || 'Unassigned'
       if (!byAssignee[assignee]) byAssignee[assignee] = []
 
-      const start = new Date(t.created)
-      const end = t.due ? new Date(t.due) : new Date(t.created)
+      const start = normalizeDate(new Date(t.created))
+      const end = t.due ? normalizeDate(new Date(t.due)) : normalizeDate(new Date(t.created))
 
       byAssignee[assignee].push({ ...t, _start: start, _end: end })
 
@@ -37,13 +44,13 @@ export default function ManagerGantt({ tasks }) {
       if (!isNaN(end.getTime())) max = max ? (end > max ? end : max) : end
     })
 
-    if (!min) min = new Date()
-    if (!max) max = new Date()
+    if (!min) min = normalizeDate(new Date())
+    if (!max) max = normalizeDate(new Date())
 
-    // expand padding
+    // expand padding (and normalize to midnight)
     const pad = 3
-    min = new Date(new Date(min).getTime() - pad * 24 * 60 * 60 * 1000)
-    max = new Date(new Date(max).getTime() + pad * 24 * 60 * 60 * 1000)
+    min = normalizeDate(new Date(min.getTime() - pad * 24 * 60 * 60 * 1000))
+    max = normalizeDate(new Date(max.getTime() + pad * 24 * 60 * 60 * 1000))
 
     let totalUnits = 0
     let markers = []
@@ -69,9 +76,12 @@ export default function ManagerGantt({ tasks }) {
     }
 
     const assigneeNames = Object.keys(byAssignee).sort()
+    
+    // Create color map based on PROJECT KEY, not assignee name
+    const projectKeys = [...new Set(tasks.map(t => t.key))].sort()
     const colorMap = {}
-    assigneeNames.forEach((name, idx) => {
-      colorMap[name] = assigneeColors[idx % assigneeColors.length]
+    projectKeys.forEach((projectKey, idx) => {
+      colorMap[projectKey] = assigneeColors[idx % assigneeColors.length]
     })
 
     const assignees = assigneeNames.map(name => ({
@@ -129,110 +139,119 @@ export default function ManagerGantt({ tasks }) {
 
       <div className="overflow-x-auto border rounded">
         <div className="min-w-max">
-          {/* Header with date markers */}
+          {/* Header with date markers - must match grid exactly */}
           <div className="flex border-b bg-gray-100 sticky top-0">
             <div className="w-48 p-3 font-medium bg-gray-50 border-r flex-shrink-0"></div>
-            <div className="relative flex-1" style={{ width: `${totalUnits * cellWidth}px` }}>
-              <div className="absolute top-0 left-0 right-0 h-full flex">
-                {dateMarkers.map((date, idx) => {
-                  let displayText = ''
-                  if (viewType === 'day') {
-                    displayText = formatDate(date)
-                  } else if (viewType === 'week') {
-                    const weekEnd = new Date(date)
-                    weekEnd.setDate(weekEnd.getDate() + 6)
-                    displayText = `${formatDate(date)} - ${formatDate(weekEnd)}`
-                  } else if (viewType === 'month') {
-                    displayText = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                  }
-                  return (
-                    <div
-                      key={idx}
-                      className="border-r text-xs text-gray-600 p-1 text-center font-medium"
-                      style={{ width: `${cellWidth}px` }}
-                    >
-                      {displayText}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="h-12"></div>
+            {/* Header columns - same width calculation as grid */}
+            <div className="flex flex-shrink-0" style={{ width: `${totalUnits * cellWidth}px` }}>
+              {dateMarkers.map((date, idx) => {
+                let displayText = ''
+                if (viewType === 'day') {
+                  displayText = formatDate(date)
+                } else if (viewType === 'week') {
+                  const weekEnd = new Date(date)
+                  weekEnd.setDate(weekEnd.getDate() + 6)
+                  displayText = `${formatDate(date)} - ${formatDate(weekEnd)}`
+                } else if (viewType === 'month') {
+                  displayText = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                }
+                return (
+                  <div
+                    key={idx}
+                    className="border-r text-xs text-gray-600 flex items-center justify-center font-medium h-12"
+                    style={{ width: `${cellWidth}px` }}
+                  >
+                    {displayText}
+                  </div>
+                )
+              })}
             </div>
           </div>
 
           {/* Grid lines and bars */}
           {assignees.map((assignee) => {
-            const colors = colorMap[assignee.name]
             const sortedTasks = [...assignee.tasks].sort((a, b) => a._start - b._start)
             
             return (
               <div key={assignee.name} className="flex border-b last:border-b-0">
+                {/* Assignee name column */}
                 <div className="w-48 p-3 font-medium bg-gray-50 border-r flex-shrink-0">{assignee.name}</div>
-                <div className="relative flex-1 p-2" style={{ width: `${totalUnits * cellWidth}px`, minHeight: '80px' }}>
-                  {/* Grid background */}
-                  <div className="absolute top-0 left-0 right-0 bottom-0 flex opacity-20">
+                
+                {/* Timeline area - NO PADDING to ensure pixel-perfect alignment */}
+                <div 
+                  className="relative flex-shrink-0" 
+                  style={{ width: `${totalUnits * cellWidth}px`, height: '50px' }}
+                >
+                  {/* Grid columns - each column = 1 day/week/month */}
+                  <div className="absolute inset-0 flex">
                     {Array.from({ length: totalUnits }).map((_, idx) => (
-                      <div key={idx} className="border-r border-gray-300" style={{ width: `${cellWidth}px` }}></div>
+                      <div 
+                        key={idx} 
+                        className="border-r border-gray-200 h-full" 
+                        style={{ width: `${cellWidth}px` }}
+                      />
                     ))}
                   </div>
 
-                  {/* Free time blocks (between tasks) */}
-                  
+                  {/* Task bars - positioned absolutely within the same coordinate space */}
+                  {assignee.tasks.map((task, tIdx) => {
+                    let startCol = 0
+                    let spanCols = 1
 
-                  {/* Task bars */}
-                  <div className="relative h-full">
-                    {assignee.tasks.map((task, tIdx) => {
-                      let startOffset = 0
-                      let duration = 1
+                    if (viewType === 'day') {
+                      // COLUMN INDEX = days from timeline start (0-indexed)
+                      // Task starting on minDate = column 0
+                      startCol = Math.round((task._start - minDate) / (1000 * 60 * 60 * 24))
+                      // SPAN = (end - start) in days + 1 (inclusive of both start and end date)
+                      spanCols = Math.round((task._end - task._start) / (1000 * 60 * 60 * 24)) + 1
+                    } else if (viewType === 'week') {
+                      startCol = Math.round((task._start - minDate) / (1000 * 60 * 60 * 24 * 7))
+                      spanCols = Math.max(1, Math.round((task._end - task._start) / (1000 * 60 * 60 * 24 * 7)) + 1)
+                    } else if (viewType === 'month') {
+                      const minDateMonthStart = new Date(minDate)
+                      minDateMonthStart.setDate(1)
+                      
+                      const taskStartMonth = new Date(task._start)
+                      taskStartMonth.setDate(1)
+                      
+                      const taskEndMonth = new Date(task._end)
+                      taskEndMonth.setDate(1)
+                      
+                      startCol = (taskStartMonth.getFullYear() - minDateMonthStart.getFullYear()) * 12 + 
+                                 (taskStartMonth.getMonth() - minDateMonthStart.getMonth())
+                      
+                      const endMonthDiff = (taskEndMonth.getFullYear() - taskStartMonth.getFullYear()) * 12 + 
+                                          (taskEndMonth.getMonth() - taskStartMonth.getMonth())
+                      
+                      spanCols = Math.max(1, endMonthDiff + 1)
+                    }
 
-                      if (viewType === 'day') {
-                        startOffset = Math.max(0, (task._start - minDate) / (1000 * 60 * 60 * 24))
-                        duration = Math.max(1, (task._end - task._start) / (1000 * 60 * 60 * 24))
-                      } else if (viewType === 'week') {
-                        startOffset = Math.max(0, (task._start - minDate) / (1000 * 60 * 60 * 24 * 7))
-                        duration = Math.max(1, (task._end - task._start) / (1000 * 60 * 60 * 24 * 7))
-                        duration = Math.max(0.2, duration)
-                      } else if (viewType === 'month') {
-                        // For month view, calculate position based on month start dates
-                        const minDateMonthStart = new Date(minDate)
-                        minDateMonthStart.setDate(1)
-                        
-                        const taskStartMonth = new Date(task._start)
-                        taskStartMonth.setDate(1)
-                        
-                        const taskEndMonth = new Date(task._end)
-                        taskEndMonth.setDate(1)
-                        
-                        // Calculate months from start
-                        const monthDiff = (taskStartMonth.getFullYear() - minDateMonthStart.getFullYear()) * 12 + 
-                                         (taskStartMonth.getMonth() - minDateMonthStart.getMonth())
-                        
-                        startOffset = Math.max(0, monthDiff)
-                        
-                        // Calculate duration in months
-                        const endMonthDiff = (taskEndMonth.getFullYear() - taskStartMonth.getFullYear()) * 12 + 
-                                            (taskEndMonth.getMonth() - taskStartMonth.getMonth())
-                        
-                        duration = Math.max(0.5, endMonthDiff + 1)
-                      }
+                    // PIXEL CALCULATION:
+                    // left = startCol * cellWidth (bar starts at left edge of column)
+                    // width = spanCols * cellWidth (bar spans exactly N columns)
+                    const leftPx = startCol * cellWidth
+                    const widthPx = spanCols * cellWidth
+                    
+                    const colors = colorMap[task.key]
 
-                      const leftPx = startOffset * cellWidth
-                      const widthPx = Math.max(30, duration * cellWidth)
-
-                      return (
-                        <div
-                          key={tIdx}
-                          className={`absolute top-2 rounded shadow-sm bg-gradient-to-r ${colors.from} ${colors.to} text-white text-xs font-medium opacity-90 hover:opacity-100 overflow-hidden`}
-                          style={{ left: `${leftPx}px`, width: `${widthPx}px`, height: '32px' }}
-                          title={`${task.key} — ${task.summary}\n${formatDate(task._start)} → ${formatDate(task._end)}`}
-                        >
-                          <div className="px-2 py-1 truncate h-full flex items-center">
-                            <span className="truncate">{task.key}</span>
-                          </div>
+                    return (
+                      <div
+                        key={tIdx}
+                        className={`absolute rounded shadow-sm bg-gradient-to-r ${colors.from} ${colors.to} text-white text-xs font-medium hover:opacity-100 overflow-hidden`}
+                        style={{ 
+                          left: `${leftPx}px`, 
+                          width: `${widthPx}px`, 
+                          top: '9px',
+                          height: '32px'
+                        }}
+                        title={`${task.key} — ${task.summary}\n${formatDate(task._start)} → ${formatDate(task._end)}`}
+                      >
+                        <div className="px-2 py-1 truncate h-full flex items-center">
+                          <span className="truncate">{task.key}</span>
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )
