@@ -20,6 +20,12 @@ export default function ManagerSummary({ tasks }) {
   const [workingPeriod, setWorkingPeriod] = useState({})
   const { byAssignee, weeks, tasksPerWeekPerAssignee, totals, idleDaysByAssignee } = useMemo(() => {
     const byAssignee = {}
+    const msPerDay = 24 * 60 * 60 * 1000
+    const normalizeDate = (d) => {
+      const nd = new Date(d)
+      nd.setHours(0, 0, 0, 0)
+      return nd
+    }
     const weeksSet = new Set()
 
     tasks.forEach(t => {
@@ -53,27 +59,32 @@ export default function ManagerSummary({ tasks }) {
     const idleDaysByAssignee = {}
     Object.keys(byAssignee).forEach(assignee => {
       const assigneeTasks = byAssignee[assignee].map(t => ({
-        start: new Date(t.created),
-        end: t.due ? new Date(t.due) : new Date(t.created),
-        duration: Number(t.duration) || 0
+        start: normalizeDate(new Date(t.created)),
+        end: t.due ? normalizeDate(new Date(t.due)) : normalizeDate(new Date(t.created)),
+        // duration in days (inclusive)
+        durationDays: (() => {
+          const s = normalizeDate(new Date(t.created))
+          const e = t.due ? normalizeDate(new Date(t.due)) : s
+          return Math.max(1, Math.floor((e - s) / msPerDay) + 1)
+        })()
       }))
-      
+
       if (assigneeTasks.length === 0) {
         idleDaysByAssignee[assignee] = 0
         return
       }
-      
+
       // Sort by start date
       assigneeTasks.sort((a, b) => a.start - b.start)
-      
-      // Get total span from first task start to last task end
+
+      // Get total span from first task start to last task end (inclusive)
       const firstTaskStart = assigneeTasks[0].start
       const lastTaskEnd = assigneeTasks[assigneeTasks.length - 1].end
-      const totalSpanDays = Math.ceil((lastTaskEnd - firstTaskStart) / (1000 * 60 * 60 * 24))
-      
-      // Sum all task durations
-      const totalTaskDays = assigneeTasks.reduce((sum, task) => sum + Math.max(1, Math.ceil((task.end - task.start) / (1000 * 60 * 60 * 24))), 0)
-      
+      const totalSpanDays = Math.max(1, Math.floor((lastTaskEnd - firstTaskStart) / msPerDay) + 1)
+
+      // Sum all task durations (inclusive)
+      const totalTaskDays = assigneeTasks.reduce((sum, task) => sum + Math.max(1, Math.floor((task.end - task.start) / msPerDay) + 1), 0)
+
       // Idle days = total span - total task days
       const idleDays = Math.max(0, totalSpanDays - totalTaskDays)
       idleDaysByAssignee[assignee] = idleDays
@@ -194,9 +205,12 @@ export default function ManagerSummary({ tasks }) {
             <h4 className="font-semibold mb-4 text-gray-800">{selectedAssignee} - Available Date Ranges</h4>
             
             {(() => {
+              const msPerDay_local = 24 * 60 * 60 * 1000
+              const normDate = (d) => { const nd = new Date(d); nd.setHours(0,0,0,0); return nd }
+
               const assigneeTasks = byAssignee[selectedAssignee].map(t => ({
-                start: new Date(t.created),
-                end: t.due ? new Date(t.due) : new Date(t.created),
+                start: normDate(t.created),
+                end: t.due ? normDate(t.due) : normDate(t.created),
                 key: t.key,
                 summary: t.summary
               }))
@@ -251,13 +265,18 @@ export default function ManagerSummary({ tasks }) {
               for (let i = 0; i < assigneeTasks.length - 1; i++) {
                 const currentEnd = assigneeTasks[i].end
                 const nextStart = assigneeTasks[i + 1].start
-                
-                if (currentEnd < nextStart) {
-                  const idleDays = Math.ceil((nextStart - currentEnd) / (1000 * 60 * 60 * 24))
+
+                // gapDays excludes the end day of the earlier task and the start day of the next task
+                const rawDays = Math.floor((nextStart - currentEnd) / msPerDay_local)
+                const gapDays = Math.max(0, rawDays - 1)
+
+                if (gapDays > 0) {
+                  const freeStart = new Date(currentEnd.getTime() + msPerDay_local)
+                  const freeEnd = new Date(nextStart.getTime() - msPerDay_local)
                   freePeriods.push({
-                    start: currentEnd,
-                    end: nextStart,
-                    days: idleDays,
+                    start: freeStart,
+                    end: freeEnd,
+                    days: gapDays,
                     type: 'between'
                   })
                 }
@@ -333,7 +352,7 @@ export default function ManagerSummary({ tasks }) {
                     <h5 className="font-semibold text-sm mb-3 text-gray-700">Scheduled Tasks</h5>
                     <div className="space-y-2">
                       {assigneeTasks.map((task, idx) => {
-                        const duration = Math.ceil((task.end - task.start) / (1000 * 60 * 60 * 24))
+                        const duration = Math.max(1, Math.floor((task.end - task.start) / msPerDay_local) + 1)
                         return (
                           <div key={idx} className="bg-purple-50 border border-purple-200 rounded p-3 flex items-center justify-between">
                             <div>
