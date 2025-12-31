@@ -7,6 +7,9 @@ export default function GanttChart({ tasks, assignee }) {
   const { stats, tasksByWeek, sortedWeeks, minDate, maxDate, allWeeks } = useMemo(() => {
     // Group tasks by week
     const tasksByWeek = {}
+    let earliestTask = null
+    let latestTask = null
+
     tasks.forEach(task => {
       if (task.due) {
         const dueDate = new Date(task.due)
@@ -16,16 +19,22 @@ export default function GanttChart({ tasks, assignee }) {
           tasksByWeek[weekKey] = []
         }
         tasksByWeek[weekKey].push(task)
+
+        // Track earliest and latest task dates
+        if (!earliestTask || dueDate < new Date(earliestTask)) {
+          earliestTask = weekKey
+        }
+        if (!latestTask || dueDate > new Date(latestTask)) {
+          latestTask = weekKey
+        }
       }
     })
 
-    const sortedWeeks = Object.keys(tasksByWeek).sort()
-    
     // Set minimum date as earliest task or default
-    const minDate = sortedWeeks.length > 0 ? new Date(sortedWeeks[0]) : new Date()
+    const minDate = earliestTask ? new Date(earliestTask) : new Date()
     
-    // Set maximum date to 6 months after the last task (or 12/16/2025 + 6 months if no tasks)
-    const referenceDate = new Date(2025, 11, 16) // December 16, 2025
+    // Set maximum date to 6 months after the last task (or 6 months from now if no tasks)
+    let referenceDate = latestTask ? new Date(latestTask) : new Date()
     const maxDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 6, referenceDate.getDate())
 
     // Generate all weeks from minDate to maxDate (for slider)
@@ -39,6 +48,8 @@ export default function GanttChart({ tasks, assignee }) {
       }
       currentDate.setDate(currentDate.getDate() + 7)
     }
+
+    const sortedWeeks = Object.keys(tasksByWeek).sort()
 
     // Calculate stats
     const totalTasks = tasks.length
