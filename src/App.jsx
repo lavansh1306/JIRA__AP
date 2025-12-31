@@ -3,7 +3,7 @@ import IssuesTable from './components/IssuesTable'
 import GanttChart from './components/GanttChart'
 import ManagerGantt from './components/ManagerGantt'
 import ManagerSummary from './components/ManagerSummary'
-import { parseCSV } from './utils/csvParser'
+import { fetchJiraIssues } from './utils/jiraApi'
 
 export default function App() {
   const [allIssues, setAllIssues] = useState([])
@@ -15,43 +15,13 @@ export default function App() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    loadCSVData()
+    loadJiraData()
   }, [])
 
-  const loadCSVData = async () => {
+  const loadJiraData = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/jira_events (1).csv')
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      const csvText = await response.text()
-      const parsedData = parseCSV(csvText)
-      
-      const issues = parsedData.map(row => {
-        const createdStr = row.Created || row['Created'] || ''
-        const dueDateStr = row['Due date'] || row['DueDate'] || ''
-        
-        const created = createdStr ? new Date(createdStr) : new Date()
-        const due = dueDateStr ? new Date(dueDateStr) : null
-
-        let duration = ''
-        if (due && !isNaN(due.getTime()) && !isNaN(created.getTime())) {
-          duration = Math.ceil((due - created) / (1000 * 60 * 60 * 24))
-        }
-
-        return {
-          key: row['Project key'] || '-',
-          issueType: row['Issue Type'] || '-',
-          summary: row['Summary'] || '-',
-          description: row['Description'] || '-',
-          priority: row['Priority'] || '-',
-          status: row['Status'] || '-',
-          assignee: row['Assignee'] || 'Unassigned',
-          team: row['Team'] || row['team'] || 'Team 1',
-          created: created.toISOString(),
-          due: due ? due.toISOString() : null,
-          duration,
-        }
-      })
+      const issues = await fetchJiraIssues()
 
       setAllIssues(issues)
       const uniqueTeams = [...new Set(issues.map(i => i.team || 'Team 1'))].sort()
@@ -60,8 +30,8 @@ export default function App() {
       setAssignees(uniqueAssignees)
       setError(null)
     } catch (err) {
-      console.error('Error loading CSV:', err)
-      setError('Failed to load CSV file')
+      console.error('Error loading Jira data:', err)
+      setError('Failed to load Jira issues. Check API server and credentials.')
     } finally {
       setLoading(false)
     }
