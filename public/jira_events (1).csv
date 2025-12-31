@@ -1,20 +1,47 @@
-Project key,Issue Type,Summary,Description,Priority,Status,Assignee,Created,Due date
-PROJ-A,Task,"Payment retry bug investigation","Analyze retry failures in payment service.",High,Open,Amit Sharma,2025-12-01,2025-12-03
-PROJ-B,Task,"Cache inconsistency fix","Resolve cache mismatch issues.",Medium,Open,Amit Sharma,2025-12-05,2025-12-07
-PROJ-A,Task,"Optimize auth token validation","Improve performance of token validation.",Medium,Open,Amit Sharma,2025-12-10,2025-12-13
+Project key,Issue Type,Summary,Description,Priority,Status,Assignee,Created,Due date,Team
+PROJ-A,Task,"Payment retry bug investigation","Analyze retry failures in payment service.",High,Open,Amit Sharma,2025-12-01,2025-12-03,Team 1
+PROJ-B,Task,"Cache inconsistency fix","Resolve cache mismatch issues.",Medium,Open,Amit Sharma,2025-12-05,2025-12-07,Team 1
+PROJ-A,Task,"Optimize auth token validation","Improve performance of token validation.",Medium,Open,Amit Sharma,2025-12-10,2025-12-13,Team 1
 
-PROJ-C,Task,"Dashboard UI cleanup","Fix alignment and spacing issues.",Low,Open,Rohit Verma,2025-12-01,2025-12-02
-PROJ-B,Task,"API response optimization","Reduce payload size and latency.",Medium,Open,Rohit Verma,2025-12-04,2025-12-06
-PROJ-C,Task,"Search query tuning","Improve relevance and speed of search.",Medium,Open,Rohit Verma,2025-12-09,2025-12-11
+PROJ-C,Task,"Dashboard UI cleanup","Fix alignment and spacing issues.",Low,Open,Rohit Verma,2025-12-01,2025-12-02,Team 1
+PROJ-B,Task,"API response optimization","Reduce payload size and latency.",Medium,Open,Rohit Verma,2025-12-04,2025-12-06,Team 1
+PROJ-C,Task,"Search query tuning","Improve relevance and speed of search.",Medium,Open,Rohit Verma,2025-12-09,2025-12-11,Team 1
 
-PROJ-D,Task,"Nightly data sync fix","Resolve intermittent sync failures.",High,Open,Neha Gupta,2025-12-02,2025-12-04
-PROJ-A,Task,"ETL error handling improvement","Add retries and better logging.",Medium,Open,Neha Gupta,2025-12-07,2025-12-09
-PROJ-D,Task,"Report generation bug fix","Fix incorrect totals in reports.",Medium,Open,Neha Gupta,2025-12-12,2025-12-14
+PROJ-D,Task,"Nightly data sync fix","Resolve intermittent sync failures.",High,Open,Neha Gupta,2025-12-02,2025-12-04,Team 1
+PROJ-A,Task,"ETL error handling improvement","Add retries and better logging.",Medium,Open,Neha Gupta,2025-12-07,2025-12-09,Team 1
+PROJ-D,Task,"Report generation bug fix","Fix incorrect totals in reports.",Medium,Open,Neha Gupta,2025-12-12,2025-12-14,Team 1
 
-PROJ-B,Task,"Sprint planning for Q1","Define scope and milestones.",Low,Open,Rahul Mehta,2025-12-01,2025-12-03
-PROJ-C,Task,"Dependency mapping update","Update service dependency docs.",Low,Open,Rahul Mehta,2025-12-06,2025-12-08
-PROJ-D,Task,"Release coordination","Coordinate release activities.",Medium,Open,Rahul Mehta,2025-12-11,2025-12-13
+PROJ-B,Task,"Sprint planning for Q1","Define scope and milestones.",Low,Open,Rahul Mehta,2025-12-01,2025-12-03,Team 1
+PROJ-C,Task,"Dependency mapping update","Update service dependency docs.",Low,Open,Rahul Mehta,2025-12-06,2025-12-08,Team 1
+PROJ-D,Task,"Release coordination","Coordinate release activities.",Medium,Open,Rahul Mehta,2025-12-11,2025-12-13,Team 1
 
-PROJ-E,Task,"Backup verification","Validate integrity of backups.",Low,Open,Pooja Iyer,2025-12-02,2025-12-03
-PROJ-A,Task,"Log rotation setup","Configure automated log rotation.",Low,Open,Pooja Iyer,2025-12-05,2025-12-06
-PROJ-E,Task,"Monitoring alert tuning","Reduce false positive alerts.",Medium,Open,Pooja Iyer,2025-12-09,2025-12-11
+PROJ-E,Task,"Backup verification","Validate integrity of backups.",Low,Open,Pooja Iyer,2025-12-02,2025-12-03,Team 1
+PROJ-A,Task,"Log rotation setup","Configure automated log rotation.",Low,Open,Pooja Iyer,2025-12-05,2025-12-06,Team 1
+PROJ-E,Task,"Monitoring alert tuning","Reduce false positive alerts.",Medium,Open,Pooja Iyer,2025-12-09,2025-12-11,Team 1
+
+# Team 2 - new team members and mostly different projects (one overlap PROJ-B, one overlap PROJ-A)
+PROJ-F,Task,"Mobile auth crash","Fix crash on login for mobile app.",High,Open,Sanjay Kumar,2025-12-02,2025-12-04,Team 2
+PROJ-G,Task,"Improve image CDN","Reduce image load times and optimize caching.",Medium,Open,Lakshmi Rao,2025-12-03,2025-12-05,Team 2
+PROJ-H,Task,"Billing reconciliation","Investigate mismatch in billing reports.",High,Open,Vikram Singh,2025-12-06,2025-12-09,Team 2
+PROJ-B,Task,"Cross-team API contract","Align API contract for search endpoint.",Medium,Open,Anita Desai,2025-12-08,2025-12-10,Team 2
+PROJ-I,Task,"Onboarding flow UX","Improve new user onboarding steps.",Low,Open,Karan Patel,2025-12-01,2025-12-02,Team 2
+PROJ-A,Task,"Shared infra: logging","Add structured logging for shared infra.",Low,Open,Sanjay Kumar,2025-12-11,2025-12-12,Team 2
+PROJ-G,Task,"CDN invalidation automation","Automate cache invalidation on deploy.",Medium,Open,Lakshmi Rao,2025-12-13,2025-12-15,Team 2
+PROJ-H,Task,"Reports: timezone fix","Ensure reports use user timezone.",Medium,Open,Vikram Singh,2025-12-10,2025-12-12,Team 2
+PROJ-J,Task,"Security audit findings","Address critical security audit items.",High,Open,Anita Desai,2025-12-14,2025-12-16,Team 2
+
+# Additional Team 2 rows (expanded dataset)
+PROJ-K,Task,"Feature flag rollout","Roll out feature flags to 10% users.",Low,Open,Meera Singh,2025-12-02,2025-12-04,Team 2
+PROJ-L,Task,"Payments: idempotency","Implement idempotency for payments.",High,Open,Rajesh Kumar,2025-12-03,2025-12-06,Team 2
+PROJ-M,Task,"Mobile onboarding A/B","Run A/B on onboarding screens.",Medium,Open,Priya Nair,2025-12-05,2025-12-07,Team 2
+PROJ-N,Task,"Localization fixes","Fix translations and RTL issues.",Low,Open,Arun Shah,2025-12-06,2025-12-08,Team 2
+PROJ-O,Task,"Metrics: retention","Add retention cohort metrics.",Medium,Open,Meera Singh,2025-12-09,2025-12-11,Team 2
+PROJ-P,Task,"Infra: DB vacuum","Schedule DB maintenance and vacuum.",Low,Open,Rajesh Kumar,2025-12-12,2025-12-13,Team 2
+PROJ-K,Task,"Feature flag rollback","Prepare rollback steps for flags.",Medium,Open,Priya Nair,2025-12-14,2025-12-15,Team 2
+PROJ-L,Task,"Billing edge-case tests","Add tests for rounding issues.",Low,Open,Arun Shah,2025-12-16,2025-12-18,Team 2
+PROJ-M,Task,"On-device caching","Implement caching for offline flows.",Medium,Open,Meera Singh,2025-12-17,2025-12-19,Team 2
+PROJ-N,Task,"Accessibility audit","Address top accessibility items.",High,Open,Rajesh Kumar,2025-12-18,2025-12-20,Team 2
+
+# A couple more overlapping quick tasks so 1-2 projects are shared
+PROJ-B,Task,"Team2 quick fix","Small fix related to cross-team API.",Low,Open,Anita Desai,2025-12-17,2025-12-17,Team 2
+PROJ-A,Task,"Team2 infra patch","Hotpatch for shared infra logging.",Low,Open,Vikram Singh,2025-12-18,2025-12-18,Team 2

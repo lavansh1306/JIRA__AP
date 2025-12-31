@@ -8,6 +8,8 @@ import { parseCSV } from './utils/csvParser'
 export default function App() {
   const [allIssues, setAllIssues] = useState([])
   const [selectedAssignee, setSelectedAssignee] = useState('')
+  const [teams, setTeams] = useState([])
+  const [selectedTeam, setSelectedTeam] = useState('All')
   const [assignees, setAssignees] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -44,6 +46,7 @@ export default function App() {
           priority: row['Priority'] || '-',
           status: row['Status'] || '-',
           assignee: row['Assignee'] || 'Unassigned',
+          team: row['Team'] || row['team'] || 'Team 1',
           created: created.toISOString(),
           due: due ? due.toISOString() : null,
           duration,
@@ -51,6 +54,8 @@ export default function App() {
       })
 
       setAllIssues(issues)
+      const uniqueTeams = [...new Set(issues.map(i => i.team || 'Team 1'))].sort()
+      setTeams(uniqueTeams)
       const uniqueAssignees = [...new Set(issues.map(i => i.assignee))].sort()
       setAssignees(uniqueAssignees)
       setError(null)
@@ -62,9 +67,20 @@ export default function App() {
     }
   }
 
+  // Filter tasks by selected assignee and selected team
   const selectedTasks = selectedAssignee
-    ? allIssues.filter(i => i.assignee === selectedAssignee && i.due)
+    ? allIssues.filter(i => i.assignee === selectedAssignee && i.due && (selectedTeam === 'All' || i.team === selectedTeam))
     : []
+
+  // Compute filtered issues for manager view based on selected team
+  const managerIssues = selectedTeam === 'All' ? allIssues : allIssues.filter(i => i.team === selectedTeam)
+
+  // Clear selected assignee if it's not part of the selected team
+  useEffect(() => {
+    if (!selectedAssignee) return
+    const exists = managerIssues.some(i => i.assignee === selectedAssignee)
+    if (!exists) setSelectedAssignee('')
+  }, [selectedTeam, allIssues])
 
   if (loading) {
     return (
@@ -95,20 +111,32 @@ export default function App() {
 
         {/* Controls */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Select Assignee for Gantt Chart:
-          </label>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Select Team:</label>
+          <select
+            value={selectedTeam}
+            onChange={(e) => setSelectedTeam(e.target.value)}
+            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-4"
+          >
+            <option value="All">All Teams</option>
+            {teams.map(team => (
+              <option key={team} value={team}>{team}</option>
+            ))}
+          </select>
+
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Select Assignee for Gantt Chart:</label>
           <select
             value={selectedAssignee}
             onChange={(e) => setSelectedAssignee(e.target.value)}
             className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           >
             <option value="">-- Choose Assignee --</option>
-            {assignees.map((assignee) => (
-              <option key={assignee} value={assignee}>
-                {assignee}
-              </option>
-            ))}
+            {assignees
+              .filter(a => selectedTeam === 'All' ? true : allIssues.some(i => i.assignee === a && i.team === selectedTeam))
+              .map((assignee) => (
+                <option key={assignee} value={assignee}>
+                  {assignee}
+                </option>
+              ))}
           </select>
 
           <div className="mt-4 flex items-center gap-4">
@@ -119,9 +147,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* Issues Table */}
+        {/* Issues Table (filtered by team) */}
         <div className="mb-8">
-          <IssuesTable issues={allIssues} />
+          <IssuesTable issues={managerIssues} />
         </div>
 
         {/* Gantt Chart */}
@@ -131,8 +159,8 @@ export default function App() {
           ) : (
             <div>
               <h3 className="text-lg font-medium mb-4">Manager View</h3>
-              <ManagerSummary tasks={allIssues} />
-              <ManagerGantt tasks={allIssues} />
+              <ManagerSummary tasks={managerIssues} />
+              <ManagerGantt tasks={managerIssues} />
             </div>
           )}
         </div>
