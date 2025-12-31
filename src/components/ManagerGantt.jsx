@@ -149,9 +149,14 @@ export default function ManagerGantt({ tasks }) {
             <div className="flex flex-shrink-0" style={{ width: `${totalUnits * cellWidth}px` }}>
               {dateMarkers.map((date, idx) => {
                 let displayText = ''
+                let dayName = ''
                 let isWeekend = false
                 const dayOfWeek = date.getDay()
                 isWeekend = dayOfWeek === 0 || dayOfWeek === 6 // Sunday=0, Saturday=6
+                
+                // Get day name: Sunday, Monday, Tuesday, etc.
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                dayName = dayNames[dayOfWeek]
                 
                 if (viewType === 'day') {
                   displayText = formatDate(date)
@@ -165,10 +170,11 @@ export default function ManagerGantt({ tasks }) {
                 return (
                   <div
                     key={idx}
-                    className={`border-r text-xs text-gray-600 flex items-center justify-center font-medium h-12 ${isWeekend ? 'bg-gray-200' : 'bg-gray-100'}`}
+                    className={`border-r text-xs text-gray-600 flex flex-col items-center justify-center font-medium h-12 ${isWeekend ? 'bg-gray-200' : 'bg-gray-100'}`}
                     style={{ width: `${cellWidth}px` }}
                   >
-                    {displayText}
+                    <div className="font-bold text-gray-800">{dayName}</div>
+                    <div className="opacity-60 text-xs">{displayText}</div>
                   </div>
                 )
               })}
