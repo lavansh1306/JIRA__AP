@@ -1,8 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { getWeekNumber, getWeekStart } from '../utils/helpers'
 
 export default function GanttChart({ tasks, assignee }) {
-  const { stats, tasksByWeek, sortedWeeks, minDate, maxDate } = useMemo(() => {
+  const [scrollPosition, setScrollPosition] = useState(0)
+
+  const { stats, tasksByWeek, sortedWeeks, minDate, maxDate, allWeeks } = useMemo(() => {
     // Group tasks by week
     const tasksByWeek = {}
     tasks.forEach(task => {
@@ -18,12 +20,25 @@ export default function GanttChart({ tasks, assignee }) {
     })
 
     const sortedWeeks = Object.keys(tasksByWeek).sort()
-    const dueDates = tasks.filter(t => t.due).map(t => new Date(t.due))
-
+    
+    // Set minimum date as earliest task or default
     const minDate = sortedWeeks.length > 0 ? new Date(sortedWeeks[0]) : new Date()
-    const maxDate = sortedWeeks.length > 0
-      ? new Date(new Date(sortedWeeks[sortedWeeks.length - 1]).getTime() + 6 * 24 * 60 * 60 * 1000)
-      : new Date()
+    
+    // Set maximum date to 6 months after the last task (or 12/16/2025 + 6 months if no tasks)
+    const referenceDate = new Date(2025, 11, 16) // December 16, 2025
+    const maxDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 6, referenceDate.getDate())
+
+    // Generate all weeks from minDate to maxDate (for slider)
+    const allWeeks = []
+    const currentDate = new Date(minDate)
+    while (currentDate <= maxDate) {
+      const weekStart = getWeekStart(new Date(currentDate))
+      const weekKey = weekStart.toISOString().split('T')[0]
+      if (!allWeeks.includes(weekKey)) {
+        allWeeks.push(weekKey)
+      }
+      currentDate.setDate(currentDate.getDate() + 7)
+    }
 
     // Calculate stats
     const totalTasks = tasks.length
@@ -42,8 +57,13 @@ export default function GanttChart({ tasks, assignee }) {
       maxDate: maxDate.toLocaleDateString(),
     }
 
-    return { stats, tasksByWeek, sortedWeeks, minDate, maxDate }
+    return { stats, tasksByWeek, sortedWeeks, minDate, maxDate, allWeeks }
   }, [tasks])
+
+  // Get visible weeks based on scroll position (show 12 weeks at a time)
+  const weeksPerView = 12
+  const visibleStartIndex = Math.floor((scrollPosition / 100) * Math.max(0, allWeeks.length - weeksPerView))
+  const visibleWeeks = allWeeks.slice(visibleStartIndex, visibleStartIndex + weeksPerView)
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
@@ -80,13 +100,37 @@ export default function GanttChart({ tasks, assignee }) {
         </div>
       </div>
 
-      {/* Tasks by Week */}
+      {/* Timeline Slider */}
+      {allWeeks.length > 0 && (
+        <div className="mb-8 bg-gray-50 rounded-lg p-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <label className="text-sm font-semibold text-gray-700">📍 Timeline Navigator</label>
+            <span className="text-sm text-gray-600">
+              Showing weeks {visibleStartIndex + 1}-{Math.min(visibleStartIndex + weeksPerView, allWeeks.length)} of {allWeeks.length}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={scrollPosition}
+            onChange={(e) => setScrollPosition(Number(e.target.value))}
+            className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          />
+          <div className="flex justify-between mt-3 text-xs text-gray-500">
+            <span>{new Date(allWeeks[0]).toLocaleDateString()}</span>
+            <span>{new Date(allWeeks[allWeeks.length - 1]).toLocaleDateString()}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Tasks by Week - Show visible weeks only */}
       <div className="space-y-6">
-        {sortedWeeks.map((weekKey, weekIdx) => {
+        {visibleWeeks.map((weekKey, weekIdx) => {
           const weekStart = new Date(weekKey)
           const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000)
           const weekNumber = getWeekNumber(weekStart)
-          const weekTasks = tasksByWeek[weekKey]
+          const weekTasks = tasksByWeek[weekKey] || []
 
           return (
             <div key={weekKey}>
@@ -101,37 +145,43 @@ export default function GanttChart({ tasks, assignee }) {
               </div>
 
               {/* Tasks in Week */}
-              <div className="space-y-3">
-                {weekTasks.map((task, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-900">{task.key}</h4>
-                        <p className="text-sm text-gray-700 mt-1">{task.summary}</p>
+              {weekTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {weekTasks.map((task, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-900">{task.key}</h4>
+                          <p className="text-sm text-gray-700 mt-1">{task.summary}</p>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {task.status}
+                          </span>
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            {task.priority}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex gap-2 ml-4">
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {task.status}
-                        </span>
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                          {task.priority}
-                        </span>
+                      <div className="flex gap-4 text-sm text-gray-600">
+                        <span>Created: {new Date(task.created).toLocaleDateString()}</span>
+                        <span>Due: {new Date(task.due).toLocaleDateString()}</span>
+                        <span className="font-semibold text-blue-600">Duration: {task.duration}d</span>
                       </div>
                     </div>
-                    <div className="flex gap-4 text-sm text-gray-600">
-                      <span>Created: {new Date(task.created).toLocaleDateString()}</span>
-                      <span>Due: {new Date(task.due).toLocaleDateString()}</span>
-                      <span className="font-semibold text-blue-600">Duration: {task.duration}d</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-100 rounded-lg p-4 text-center text-gray-500 text-sm">
+                  No tasks scheduled for this week
+                </div>
+              )}
 
               {/* Week Separator */}
-              {weekIdx < sortedWeeks.length - 1 && (
+              {weekIdx < visibleWeeks.length - 1 && (
                 <div className="h-1 bg-gradient-to-r from-gray-300 to-transparent my-6"></div>
               )}
             </div>
