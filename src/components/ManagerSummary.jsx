@@ -105,7 +105,7 @@ export default function ManagerSummary({ tasks }) {
   const topAssignees = totals.slice(0, 8)
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
       <h3 className="text-xl font-bold mb-4">Manager Summary</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
