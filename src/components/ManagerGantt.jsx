@@ -133,8 +133,10 @@ export default function ManagerGantt({ tasks }) {
       </div>
 
       <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-        <div>Timeline: <strong>{formatDate(minDate)}</strong> — <strong>{formatDate(maxDate)}</strong></div>
-        <div className="ml-4">Span: <strong>{totalUnits} {viewType === 'day' ? 'days' : viewType === 'week' ? 'weeks' : 'months'}</strong></div>
+        {/* Show month-range (e.g. \"Nov — Dec\") instead of full dates, and remove span */}
+        <div>
+          Timeline: <strong>{minDate.toLocaleString(undefined, { month: 'short' })}</strong> — <strong>{maxDate.toLocaleString(undefined, { month: 'short' })}</strong>
+        </div>
       </div>
 
       <div className="overflow-x-auto border rounded">
