@@ -90,6 +90,8 @@ export default function ManagerSummary({ tasks }) {
       idleDaysByAssignee[assignee] = idleDays
     })
 
+    
+
     // totals
     const totals = Object.keys(byAssignee).map(name => {
       const items = byAssignee[name]

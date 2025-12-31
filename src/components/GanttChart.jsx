@@ -5,36 +5,44 @@ export default function GanttChart({ tasks, assignee }) {
   const [scrollPosition, setScrollPosition] = useState(0)
 
   const { stats, tasksByWeek, sortedWeeks, minDate, maxDate, allWeeks } = useMemo(() => {
-    // Group tasks by week
+    // Group tasks by week but compute earliest start from task.created
     const tasksByWeek = {}
-    let earliestTask = null
-    let latestTask = null
+    let earliest = null
+    let latest = null
 
     tasks.forEach(task => {
-      if (task.due) {
-        const dueDate = new Date(task.due)
-        const weekStart = getWeekStart(dueDate)
+      // use created as the primary start; fall back to due if missing
+      const createdDate = task.created ? new Date(task.created) : null
+      const dueDate = task.due ? new Date(task.due) : null
+
+      const taskStart = createdDate && !isNaN(createdDate.getTime()) ? createdDate : (dueDate && !isNaN(dueDate.getTime()) ? dueDate : null)
+      const taskEnd = dueDate && !isNaN(dueDate.getTime()) ? dueDate : (createdDate && !isNaN(createdDate.getTime()) ? createdDate : null)
+
+      if (taskStart) {
+        const weekStart = getWeekStart(taskStart)
         const weekKey = weekStart.toISOString().split('T')[0]
-        if (!tasksByWeek[weekKey]) {
-          tasksByWeek[weekKey] = []
-        }
+        if (!tasksByWeek[weekKey]) tasksByWeek[weekKey] = []
         tasksByWeek[weekKey].push(task)
 
         // Track earliest and latest task dates
-        if (!earliestTask || dueDate < new Date(earliestTask)) {
-          earliestTask = weekKey
-        }
-        if (!latestTask || dueDate > new Date(latestTask)) {
-          latestTask = weekKey
-        }
+        if (!earliest || taskStart < earliest) earliest = taskStart
+        if (!latest || (taskEnd && taskEnd > latest)) latest = taskEnd
+      } else if (taskEnd) {
+        const weekStart = getWeekStart(taskEnd)
+        const weekKey = weekStart.toISOString().split('T')[0]
+        if (!tasksByWeek[weekKey]) tasksByWeek[weekKey] = []
+        tasksByWeek[weekKey].push(task)
+
+        if (!earliest) earliest = taskEnd
+        if (!latest || taskEnd > latest) latest = taskEnd
       }
     })
 
-    // Set minimum date as earliest task or default
-    const minDate = earliestTask ? new Date(earliestTask) : new Date()
-    
+    // Set minimum date as earliest task start (normalized) or default
+    const minDate = earliest ? getWeekStart(earliest) : getWeekStart(new Date())
+
     // Set maximum date to 6 months after the last task (or 6 months from now if no tasks)
-    let referenceDate = latestTask ? new Date(latestTask) : new Date()
+    let referenceDate = latest ? latest : new Date()
     const maxDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 6, referenceDate.getDate())
 
     // Generate all weeks from minDate to maxDate (for slider)

@@ -47,8 +47,8 @@ export default function ManagerGantt({ tasks }) {
     if (!min) min = normalizeDate(new Date())
     if (!max) max = normalizeDate(new Date())
 
-    // expand padding - add 3 days before and extend max to 6 months after
-    const pad = 3
+    // Start timeline from the earliest task start (no extra left padding)
+    const pad = 0
     min = normalizeDate(new Date(min.getTime() - pad * 24 * 60 * 60 * 1000))
     // Extend max to 6 months after last task
     max = normalizeDate(new Date(max.getFullYear(), max.getMonth() + 6, max.getDate()))
