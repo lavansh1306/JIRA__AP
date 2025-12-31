@@ -85,7 +85,7 @@ export default function GanttChart({ tasks, assignee }) {
   const visibleWeeks = allWeeks.slice(visibleStartIndex, visibleStartIndex + weeksPerView)
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+    <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 px-8 md:px-24">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">
         📅 Gantt Chart - {assignee}
       </h2>

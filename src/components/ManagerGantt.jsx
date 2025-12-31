@@ -103,7 +103,7 @@ export default function ManagerGantt({ tasks }) {
   if (!assignees.length) return <div className="p-6 bg-white rounded shadow">No tasks to show</div>
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Manager Gantt — All Assignees</h2>
         <div className="flex items-center gap-4">
@@ -134,9 +134,9 @@ export default function ManagerGantt({ tasks }) {
       </div>
 
       <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-        {/* Show month-range (e.g. \"Nov — Dec\") instead of full dates, and remove span */}
+        {/* Show month-range with year (e.g. \"Nov 2025 — Jun 2026\") */}
         <div>
-          Timeline: <strong>{minDate.toLocaleString(undefined, { month: 'short' })}</strong> — <strong>{maxDate.toLocaleString(undefined, { month: 'short' })}</strong>
+          Timeline: <strong>{minDate.toLocaleString(undefined, { month: 'short', year: 'numeric' })}</strong> — <strong>{maxDate.toLocaleString(undefined, { month: 'short', year: 'numeric' })}</strong>
         </div>
       </div>
 
@@ -149,6 +149,10 @@ export default function ManagerGantt({ tasks }) {
             <div className="flex flex-shrink-0" style={{ width: `${totalUnits * cellWidth}px` }}>
               {dateMarkers.map((date, idx) => {
                 let displayText = ''
+                let isWeekend = false
+                const dayOfWeek = date.getDay()
+                isWeekend = dayOfWeek === 0 || dayOfWeek === 6 // Sunday=0, Saturday=6
+                
                 if (viewType === 'day') {
                   displayText = formatDate(date)
                 } else if (viewType === 'week') {
@@ -161,7 +165,7 @@ export default function ManagerGantt({ tasks }) {
                 return (
                   <div
                     key={idx}
-                    className="border-r text-xs text-gray-600 flex items-center justify-center font-medium h-12"
+                    className={`border-r text-xs text-gray-600 flex items-center justify-center font-medium h-12 ${isWeekend ? 'bg-gray-200' : 'bg-gray-100'}`}
                     style={{ width: `${cellWidth}px` }}
                   >
                     {displayText}
@@ -187,13 +191,28 @@ export default function ManagerGantt({ tasks }) {
                 >
                   {/* Grid columns - each column = 1 day/week/month */}
                   <div className="absolute inset-0 flex">
-                    {Array.from({ length: totalUnits }).map((_, idx) => (
-                      <div 
-                        key={idx} 
-                        className="border-r border-gray-200 h-full" 
-                        style={{ width: `${cellWidth}px` }}
-                      />
-                    ))}
+                    {Array.from({ length: totalUnits }).map((_, idx) => {
+                      let isWeekend = false
+                      
+                      if (viewType === 'day') {
+                        const cellDate = new Date(minDate.getTime() + idx * 24 * 60 * 60 * 1000)
+                        const dayOfWeek = cellDate.getDay()
+                        isWeekend = dayOfWeek === 0 || dayOfWeek === 6 // Sunday=0, Saturday=6
+                      } else if (viewType === 'week') {
+                        const cellDate = new Date(minDate.getTime() + idx * 7 * 24 * 60 * 60 * 1000)
+                        // For week view, mark if it starts on Saturday or Sunday
+                        const dayOfWeek = cellDate.getDay()
+                        isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+                      }
+                      
+                      return (
+                        <div 
+                          key={idx} 
+                          className={`border-r border-gray-200 h-full ${isWeekend ? 'bg-gray-200' : ''}`}
+                          style={{ width: `${cellWidth}px` }}
+                        />
+                      )
+                    })}
                   </div>
 
                   {/* Task bars - positioned absolutely within the same coordinate space */}
