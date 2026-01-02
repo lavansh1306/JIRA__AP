@@ -1,7 +1,37 @@
 import React, { useMemo, useState } from 'react'
 import { getWeekStart } from '../utils/helpers'
+import type { Issue } from '../utils/jiraApi'
 
-function StatsCard({ title, value, subtitle }) {
+interface ManagerSummaryProps {
+  tasks: Issue[]
+}
+
+interface StatsCardProps {
+  title: string
+  value: string | number
+  subtitle?: string
+}
+
+interface TotalItem {
+  name: string
+  count: number
+  avgDuration: number
+  overdue: number
+  idleDays: number
+}
+
+interface WorkingPeriod {
+  [key: string]: { start: Date; end: Date }
+}
+
+interface FreePeriod {
+  start: Date
+  end: Date
+  days: number
+  type: string
+}
+
+function StatsCard({ title, value, subtitle }: StatsCardProps) {
   return (
     <div className="bg-white p-4 rounded shadow-sm">
       <div className="text-sm text-gray-500">{title}</div>
@@ -11,23 +41,23 @@ function StatsCard({ title, value, subtitle }) {
   )
 }
 
-function formatDate(d) {
+function formatDate(d: Date): string {
   return d.toLocaleDateString()
 }
 
-export default function ManagerSummary({ tasks }) {
-  const [selectedAssignee, setSelectedAssignee] = useState(null)
-  const [workingPeriod, setWorkingPeriod] = useState({})
+export default function ManagerSummary({ tasks }: ManagerSummaryProps) {
+  const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null)
+  const [workingPeriod, setWorkingPeriod] = useState<WorkingPeriod>({})
   const [showBlockTimeResult, setShowBlockTimeResult] = useState(false)
   const { byAssignee, weeks, tasksPerWeekPerAssignee, totals, idleDaysByAssignee } = useMemo(() => {
-    const byAssignee = {}
+    const byAssignee: { [key: string]: Issue[] } = {}
     const msPerDay = 24 * 60 * 60 * 1000
-    const normalizeDate = (d) => {
+    const normalizeDate = (d: Date | string): Date => {
       const nd = new Date(d)
       nd.setHours(0, 0, 0, 0)
       return nd
     }
-    const weeksSet = new Set()
+    const weeksSet = new Set<string>()
 
     tasks.forEach(t => {
       const assignee = t.assignee || 'Unassigned'
@@ -47,26 +77,26 @@ export default function ManagerSummary({ tasks }) {
     const weeks = Array.from(weeksSet).sort()
 
     // tasks per week per assignee (count)
-    const tasksPerWeekPerAssignee = {}
+    const tasksPerWeekPerAssignee: { [key: string]: { [key: string]: number } } = {}
     Object.keys(byAssignee).forEach(assignee => {
       tasksPerWeekPerAssignee[assignee] = {}
       byAssignee[assignee].forEach(t => {
-        const wk = (t.due ? getWeekStart(new Date(t.due)) : getWeekStart(new Date(t.created))).toISOString().split('T')[0]
+        const wk = (t.due ? getWeekStart(new Date(t.due)) : getWeekStart(new Date(t.created!))).toISOString().split('T')[0]
         tasksPerWeekPerAssignee[assignee][wk] = (tasksPerWeekPerAssignee[assignee][wk] || 0) + 1
       })
     })
 
     // Calculate idle days between first and last task for each assignee
-    const idleDaysByAssignee = {}
+    const idleDaysByAssignee: { [key: string]: number } = {}
     Object.keys(byAssignee).forEach(assignee => {
       const assigneeTasks = byAssignee[assignee].map(t => ({
-        start: normalizeDate(new Date(t.created)),
-        end: t.due ? normalizeDate(new Date(t.due)) : normalizeDate(new Date(t.created)),
+        start: normalizeDate(t.created!),
+        end: t.due ? normalizeDate(t.due) : normalizeDate(t.created!),
         // duration in days (inclusive)
         durationDays: (() => {
-          const s = normalizeDate(new Date(t.created))
-          const e = t.due ? normalizeDate(new Date(t.due)) : s
-          return Math.max(1, Math.floor((e - s) / msPerDay) + 1)
+          const s = normalizeDate(t.created!)
+          const e = t.due ? normalizeDate(t.due) : s
+          return Math.max(1, Math.floor((e.getTime() - s.getTime()) / msPerDay) + 1)
         })()
       }))
 
@@ -76,31 +106,29 @@ export default function ManagerSummary({ tasks }) {
       }
 
       // Sort by start date
-      assigneeTasks.sort((a, b) => a.start - b.start)
+      assigneeTasks.sort((a, b) => a.start.getTime() - b.start.getTime())
 
       // Get total span from first task start to last task end (inclusive)
       const firstTaskStart = assigneeTasks[0].start
       const lastTaskEnd = assigneeTasks[assigneeTasks.length - 1].end
-      const totalSpanDays = Math.max(1, Math.floor((lastTaskEnd - firstTaskStart) / msPerDay) + 1)
+      const totalSpanDays = Math.max(1, Math.floor((lastTaskEnd.getTime() - firstTaskStart.getTime()) / msPerDay) + 1)
 
       // Sum all task durations (inclusive)
-      const totalTaskDays = assigneeTasks.reduce((sum, task) => sum + Math.max(1, Math.floor((task.end - task.start) / msPerDay) + 1), 0)
+      const totalTaskDays = assigneeTasks.reduce((sum, task) => sum + Math.max(1, Math.floor((task.end.getTime() - task.start.getTime()) / msPerDay) + 1), 0)
 
       // Idle days = total span - total task days
       const idleDays = Math.max(0, totalSpanDays - totalTaskDays)
       idleDaysByAssignee[assignee] = idleDays
     })
 
-    
-
     // totals
-    const totals = Object.keys(byAssignee).map(name => {
+    const totals: TotalItem[] = Object.keys(byAssignee).map(name => {
       const items = byAssignee[name]
       const avgDuration = Math.round(items.reduce((s, it) => s + (Number(it.duration) || 0), 0) / Math.max(1, items.length))
       const overdue = items.filter(it => it.due && new Date(it.due) < new Date()).length
       const idleDays = idleDaysByAssignee[name] || 0
       return { name, count: items.length, avgDuration, overdue, idleDays }
-    }).sort((a,b)=>b.count-a.count)
+    }).sort((a, b) => b.count - a.count)
 
     return { byAssignee, weeks, tasksPerWeekPerAssignee, totals, idleDaysByAssignee }
   }, [tasks])
@@ -114,7 +142,7 @@ export default function ManagerSummary({ tasks }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatsCard title="Total Assignees" value={Object.keys(byAssignee).length} />
         <StatsCard title="Total Tasks" value={tasks.length} />
-        <StatsCard title="Avg Duration (days)" value={Math.round(tasks.reduce((s,t)=>s+(Number(t.duration)||0),0)/Math.max(1,tasks.length))} />
+        <StatsCard title="Avg Duration (days)" value={Math.round(tasks.reduce((s, t) => s + (Number(t.duration) || 0), 0) / Math.max(1, tasks.length))} />
       </div>
 
       <div className="mb-6">
@@ -224,7 +252,7 @@ export default function ManagerSummary({ tasks }) {
                   {weeks.map(wk => {
                     const v = (tasksPerWeekPerAssignee[name] && tasksPerWeekPerAssignee[name][wk]) || 0
                     const intensity = Math.min(1, v / 5)
-                    const bg = `rgba(59,130,246,${0.15 + intensity*0.7})`
+                    const bg = `rgba(59,130,246,${0.15 + intensity * 0.7})`
                     return <div key={wk} className="p-2 text-center text-sm" style={{ background: bg }}>{v || '-'}</div>
                   })}
                 </React.Fragment>
@@ -258,11 +286,11 @@ export default function ManagerSummary({ tasks }) {
             
             {(() => {
               const msPerDay_local = 24 * 60 * 60 * 1000
-              const normDate = (d) => { const nd = new Date(d); nd.setHours(0,0,0,0); return nd }
+              const normDate = (d: Date | string): Date => { const nd = new Date(d); nd.setHours(0, 0, 0, 0); return nd }
 
               const assigneeTasks = byAssignee[selectedAssignee].map(t => ({
-                start: normDate(t.created),
-                end: t.due ? normDate(t.due) : normDate(t.created),
+                start: normDate(t.created!),
+                end: t.due ? normDate(t.due) : normDate(t.created!),
                 key: t.key,
                 summary: t.summary
               }))
@@ -272,7 +300,7 @@ export default function ManagerSummary({ tasks }) {
               }
 
               // Sort by start date
-              assigneeTasks.sort((a, b) => a.start - b.start)
+              assigneeTasks.sort((a, b) => a.start.getTime() - b.start.getTime())
               
               const defaultStart = assigneeTasks[0].start
               const defaultEnd = assigneeTasks[assigneeTasks.length - 1].end
@@ -281,7 +309,7 @@ export default function ManagerSummary({ tasks }) {
               const currentEnd = workingPeriod[selectedAssignee]?.end || defaultEnd
               
               // Handle date change
-              const handleStartDateChange = (e) => {
+              const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newDate = new Date(e.target.value)
                 setWorkingPeriod(prev => ({
                   ...prev,
@@ -292,7 +320,7 @@ export default function ManagerSummary({ tasks }) {
                 }))
               }
               
-              const handleEndDateChange = (e) => {
+              const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newDate = new Date(e.target.value)
                 setWorkingPeriod(prev => ({
                   ...prev,
@@ -311,7 +339,7 @@ export default function ManagerSummary({ tasks }) {
                 })
               }
               
-              const freePeriods = []
+              const freePeriods: FreePeriod[] = []
               
               // Calculate gaps between tasks
               for (let i = 0; i < assigneeTasks.length - 1; i++) {
@@ -319,7 +347,7 @@ export default function ManagerSummary({ tasks }) {
                 const nextStart = assigneeTasks[i + 1].start
 
                 // gapDays excludes the end day of the earlier task and the start day of the next task
-                const rawDays = Math.floor((nextStart - currentEnd) / msPerDay_local)
+                const rawDays = Math.floor((nextStart.getTime() - currentEnd.getTime()) / msPerDay_local)
                 const gapDays = Math.max(0, rawDays - 1)
 
                 if (gapDays > 0) {
@@ -404,7 +432,7 @@ export default function ManagerSummary({ tasks }) {
                     <h5 className="font-semibold text-sm mb-3 text-gray-700">Scheduled Tasks</h5>
                     <div className="space-y-2">
                       {assigneeTasks.map((task, idx) => {
-                        const duration = Math.max(1, Math.floor((task.end - task.start) / msPerDay_local) + 1)
+                        const duration = Math.max(1, Math.floor((task.end.getTime() - task.start.getTime()) / msPerDay_local) + 1)
                         return (
                           <div key={idx} className="bg-purple-50 border border-purple-200 rounded p-3 flex items-center justify-between">
                             <div>

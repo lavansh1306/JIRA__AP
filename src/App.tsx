@@ -4,17 +4,18 @@ import GanttChart from './components/GanttChart'
 import ManagerGantt from './components/ManagerGantt'
 import ManagerSummary from './components/ManagerSummary'
 import { fetchJiraIssues } from './utils/jiraApi'
+import type { Issue } from './utils/jiraApi'
 
 export default function App() {
-  const [allIssues, setAllIssues] = useState([])
+  const [allIssues, setAllIssues] = useState<Issue[]>([])
   const [selectedAssignee, setSelectedAssignee] = useState('')
-  const [assignees, setAssignees] = useState([])
+  const [assignees, setAssignees] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   const [projectKeyInput, setProjectKeyInput] = useState('')
   const [addingProject, setAddingProject] = useState(false)
-  const [currentProject, setCurrentProject] = useState(null)
-  const [loadedProjects, setLoadedProjects] = useState([])
+  const [currentProject, setCurrentProject] = useState<string | null>(null)
+  const [loadedProjects, setLoadedProjects] = useState<string[]>([])
   const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
@@ -32,16 +33,16 @@ export default function App() {
     if (!selectedAssignee) return
     const exists = allIssues.some(i => i.assignee === selectedAssignee)
     if (!exists) setSelectedAssignee('')
-  }, [allIssues])
+  }, [allIssues, selectedAssignee])
 
-  const fetchProjectData = async (projectKey) => {
+  const fetchProjectData = async (projectKey: string): Promise<Issue[]> => {
     try {
       const response = await fetch(`/api/issues?projectKey=${projectKey}`)
       if (!response.ok) {
         throw new Error('Failed to fetch project issues')
       }
       const projectIssues = await response.json()
-      const formattedIssues = (Array.isArray(projectIssues) ? projectIssues : (projectIssues.issues || [])).map((issue) => ({
+      const formattedIssues = (Array.isArray(projectIssues) ? projectIssues : (projectIssues.issues || [])).map((issue: any) => ({
         key: issue.key || '-',
         issueType: issue.issueType || issue.type || '-',
         summary: issue.summary || '-',
@@ -86,13 +87,13 @@ export default function App() {
       setProjectKeyInput('')
     } catch (err) {
       console.error('Error adding project:', err)
-      setError(`Failed to add project: ${err.message}`)
+      setError(`Failed to add project: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setAddingProject(false)
     }
   }
 
-  const handleSwitchProject = async (projectKey) => {
+  const handleSwitchProject = async (projectKey: string) => {
     setRefreshing(true)
     setError(null)
     try {
@@ -104,7 +105,7 @@ export default function App() {
       setSelectedAssignee('')
     } catch (err) {
       console.error('Error switching project:', err)
-      setError(`Failed to load project: ${err.message}`)
+      setError(`Failed to load project: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setRefreshing(false)
     }
@@ -121,7 +122,7 @@ export default function App() {
       setAssignees(newAssignees)
     } catch (err) {
       console.error('Error refreshing project:', err)
-      setError(`Failed to refresh project: ${err.message}`)
+      setError(`Failed to refresh project: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setRefreshing(false)
     }
@@ -236,7 +237,7 @@ export default function App() {
 
               <div className="mt-4 flex items-center gap-4">
                 <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" className="rounded" checked={false} onChange={(e)=>{ /* placeholder for keyboard users */ }} disabled/>
+                  <input type="checkbox" className="rounded" checked={false} onChange={() => {}} disabled/>
                   <span className="text-sm text-gray-600">(Tip) Toggle Manager view below to see aggregated lanes</span>
                 </label>
               </div>
