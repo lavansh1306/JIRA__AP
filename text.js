@@ -43,7 +43,14 @@ const extractDescription = (desc) => {
   return "";
 };
 
-app.get("/api/issues", async (_req, res) => {
+app.get("/api/issues", async (req, res) => {
+  // Get project key from query parameter or use default from env
+  const projectKey = req.query.projectKey || PROJECT_KEY;
+
+  if (!projectKey) {
+    return res.status(400).json({ error: "Project key is required. Provide it as ?projectKey=YOURKEY or set JIRA_PROJECT_KEY in .env" });
+  }
+
   if (!isConfigReady || !JIRA_SEARCH_URL) {
     return res.status(500).json({ error: "Jira configuration missing" });
   }
@@ -57,7 +64,7 @@ app.get("/api/issues", async (_req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        jql: `project = ${PROJECT_KEY} AND created >= -365d ORDER BY created DESC`,
+        jql: `project = ${projectKey} AND created >= -365d ORDER BY created DESC`,
         fields: [
           "key",
           "summary",

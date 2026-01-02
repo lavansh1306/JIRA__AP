@@ -18,6 +18,7 @@ function formatDate(d) {
 export default function ManagerSummary({ tasks }) {
   const [selectedAssignee, setSelectedAssignee] = useState(null)
   const [workingPeriod, setWorkingPeriod] = useState({})
+  const [showBlockTimeResult, setShowBlockTimeResult] = useState(false)
   const { byAssignee, weeks, tasksPerWeekPerAssignee, totals, idleDaysByAssignee } = useMemo(() => {
     const byAssignee = {}
     const msPerDay = 24 * 60 * 60 * 1000
@@ -114,6 +115,55 @@ export default function ManagerSummary({ tasks }) {
         <StatsCard title="Total Assignees" value={Object.keys(byAssignee).length} />
         <StatsCard title="Total Tasks" value={tasks.length} />
         <StatsCard title="Avg Duration (days)" value={Math.round(tasks.reduce((s,t)=>s+(Number(t.duration)||0),0)/Math.max(1,tasks.length))} />
+      </div>
+
+      <div className="mb-6">
+        <button
+          onClick={() => setShowBlockTimeResult(!showBlockTimeResult)}
+          className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold flex items-center gap-2"
+        >
+          ⏱️ Calculate Block Time
+        </button>
+        
+        {showBlockTimeResult && (
+          <div className="mt-4 bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <p className="text-sm text-gray-600 mb-2">Total Block Time (All Employees)</p>
+                <p className="text-4xl font-bold text-purple-600">{Object.values(idleDaysByAssignee).reduce((sum, days) => sum + days, 0)}</p>
+                <p className="text-xs text-gray-500 mt-2">Total Idle Days</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <p className="text-sm text-gray-600 mb-2">Average Block Time Per Employee</p>
+                <p className="text-4xl font-bold text-blue-600">{(Object.values(idleDaysByAssignee).reduce((sum, days) => sum + days, 0) / Math.max(1, Object.keys(byAssignee).length)).toFixed(1)}</p>
+                <p className="text-xs text-gray-500 mt-2">Idle Days/Employee</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <p className="text-sm text-gray-600 mb-2">Highest Block Time</p>
+                <p className="text-4xl font-bold text-orange-600">{Math.max(...Object.values(idleDaysByAssignee), 0)}</p>
+                <p className="text-xs text-gray-500 mt-2">{totals.find(t => t.idleDays === Math.max(...totals.map(x => x.idleDays)))?.name || '-'}</p>
+              </div>
+            </div>
+            
+            <div className="mt-4 bg-white rounded-lg p-4">
+              <h4 className="font-semibold text-gray-800 mb-3">Block Time Breakdown by Employee</h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {totals
+                  .filter(t => t.idleDays > 0)
+                  .sort((a, b) => b.idleDays - a.idleDays)
+                  .map(t => (
+                    <div key={t.name} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                      <span className="text-sm font-medium">{t.name}</span>
+                      <span className="text-sm font-bold text-purple-600">{t.idleDays} days</span>
+                    </div>
+                  ))}
+                {totals.filter(t => t.idleDays > 0).length === 0 && (
+                  <p className="text-gray-500 text-sm text-center py-4">All employees are fully scheduled</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="md:flex gap-6">

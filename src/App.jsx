@@ -8,49 +8,124 @@ import { fetchJiraIssues } from './utils/jiraApi'
 export default function App() {
   const [allIssues, setAllIssues] = useState([])
   const [selectedAssignee, setSelectedAssignee] = useState('')
-  const [teams, setTeams] = useState([])
-  const [selectedTeam, setSelectedTeam] = useState('All')
   const [assignees, setAssignees] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [projectKeyInput, setProjectKeyInput] = useState('')
+  const [addingProject, setAddingProject] = useState(false)
+  const [currentProject, setCurrentProject] = useState(null)
+  const [loadedProjects, setLoadedProjects] = useState([])
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
-    loadJiraData()
+    // No initial data load - teams start empty
+    setLoading(false)
   }, [])
 
-  const loadJiraData = async () => {
-    try {
-      setLoading(true)
-      const issues = await fetchJiraIssues()
+  // Filter tasks by selected assignee
+  const selectedTasks = selectedAssignee
+    ? allIssues.filter(i => i.assignee === selectedAssignee && i.due)
+    : []
 
-      setAllIssues(issues)
-      const uniqueTeams = [...new Set(issues.map(i => i.team || 'Team 1'))].sort()
-      setTeams(uniqueTeams)
-      const uniqueAssignees = [...new Set(issues.map(i => i.assignee))].sort()
-      setAssignees(uniqueAssignees)
-      setError(null)
+  // Clear selected assignee when issues change
+  useEffect(() => {
+    if (!selectedAssignee) return
+    const exists = allIssues.some(i => i.assignee === selectedAssignee)
+    if (!exists) setSelectedAssignee('')
+  }, [allIssues])
+
+  const fetchProjectData = async (projectKey) => {
+    try {
+      const response = await fetch(`/api/issues?projectKey=${projectKey}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch project issues')
+      }
+      const projectIssues = await response.json()
+      const formattedIssues = (Array.isArray(projectIssues) ? projectIssues : (projectIssues.issues || [])).map((issue) => ({
+        key: issue.key || '-',
+        issueType: issue.issueType || issue.type || '-',
+        summary: issue.summary || '-',
+        description: issue.description || '-',
+        priority: issue.priority || '-',
+        status: issue.status || '-',
+        assignee: issue.assignee || 'Unassigned',
+        team: projectKey,
+        created: issue.created || null,
+        due: issue.due || null,
+        duration: issue.duration === undefined ? '' : issue.duration,
+      }))
+      return formattedIssues
     } catch (err) {
-      console.error('Error loading Jira data:', err)
-      setError('Failed to load Jira issues. Check API server and credentials.')
-    } finally {
-      setLoading(false)
+      throw err
     }
   }
 
-  // Filter tasks by selected assignee and selected team
-  const selectedTasks = selectedAssignee
-    ? allIssues.filter(i => i.assignee === selectedAssignee && i.due && (selectedTeam === 'All' || i.team === selectedTeam))
-    : []
+  const handleAddProject = async () => {
+    const projectKey = projectKeyInput.trim().toUpperCase()
+    if (!projectKey) {
+      alert('Please enter a project key')
+      return
+    }
 
-  // Compute filtered issues for manager view based on selected team
-  const managerIssues = selectedTeam === 'All' ? allIssues : allIssues.filter(i => i.team === selectedTeam)
+    setAddingProject(true)
+    setError(null)
+    try {
+      const formattedIssues = await fetchProjectData(projectKey)
 
-  // Clear selected assignee if it's not part of the selected team
-  useEffect(() => {
-    if (!selectedAssignee) return
-    const exists = managerIssues.some(i => i.assignee === selectedAssignee)
-    if (!exists) setSelectedAssignee('')
-  }, [selectedTeam, allIssues])
+      // Add to loaded projects if not already there
+      if (!loadedProjects.includes(projectKey)) {
+        setLoadedProjects([...loadedProjects, projectKey])
+      }
+
+      // Load current project data
+      setAllIssues(formattedIssues)
+      setCurrentProject(projectKey)
+      const newAssignees = [...new Set(formattedIssues.map(i => i.assignee))].sort()
+      setAssignees(newAssignees)
+      setSelectedAssignee('')
+      setProjectKeyInput('')
+    } catch (err) {
+      console.error('Error adding project:', err)
+      setError(`Failed to add project: ${err.message}`)
+    } finally {
+      setAddingProject(false)
+    }
+  }
+
+  const handleSwitchProject = async (projectKey) => {
+    setRefreshing(true)
+    setError(null)
+    try {
+      const formattedIssues = await fetchProjectData(projectKey)
+      setAllIssues(formattedIssues)
+      setCurrentProject(projectKey)
+      const newAssignees = [...new Set(formattedIssues.map(i => i.assignee))].sort()
+      setAssignees(newAssignees)
+      setSelectedAssignee('')
+    } catch (err) {
+      console.error('Error switching project:', err)
+      setError(`Failed to load project: ${err.message}`)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const handleRefreshProject = async () => {
+    if (!currentProject) return
+    setRefreshing(true)
+    setError(null)
+    try {
+      const formattedIssues = await fetchProjectData(currentProject)
+      setAllIssues(formattedIssues)
+      const newAssignees = [...new Set(formattedIssues.map(i => i.assignee))].sort()
+      setAssignees(newAssignees)
+    } catch (err) {
+      console.error('Error refreshing project:', err)
+      setError(`Failed to refresh project: ${err.message}`)
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -60,16 +135,20 @@ export default function App() {
     )
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-2xl font-semibold text-red-600">{error}</div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-2 md:px-4">
+      {/* Loading Overlay */}
+      {addingProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 text-center">
+            <div className="text-lg font-semibold text-gray-700 mb-4">Fetching Project Data...</div>
+            <div className="inline-block">
+              <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -81,59 +160,119 @@ export default function App() {
 
         {/* Controls */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Select Team:</label>
-          <select
-            value={selectedTeam}
-            onChange={(e) => setSelectedTeam(e.target.value)}
-            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-4"
-          >
-            <option value="All">All Teams</option>
-            {teams.map(team => (
-              <option key={team} value={team}>{team}</option>
-            ))}
-          </select>
-
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Select Assignee for Gantt Chart:</label>
-          <select
-            value={selectedAssignee}
-            onChange={(e) => setSelectedAssignee(e.target.value)}
-            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
-            <option value="">-- Choose Assignee --</option>
-            {assignees
-              .filter(a => selectedTeam === 'All' ? true : allIssues.some(i => i.assignee === a && i.team === selectedTeam))
-              .map((assignee) => (
-                <option key={assignee} value={assignee}>
-                  {assignee}
-                </option>
-              ))}
-          </select>
-
-          <div className="mt-4 flex items-center gap-4">
-            <label className="inline-flex items-center gap-2">
-              <input type="checkbox" className="rounded" checked={false} onChange={(e)=>{ /* placeholder for keyboard users */ }} disabled/>
-              <span className="text-sm text-gray-600">(Tip) Toggle Manager view below to see aggregated lanes</span>
-            </label>
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Add Project</h3>
+            <div className="flex gap-2 flex-col md:flex-row">
+              <input
+                type="text"
+                placeholder="Enter project key (e.g., PROJ)"
+                value={projectKeyInput}
+                onChange={(e) => setProjectKeyInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddProject()}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                disabled={addingProject || refreshing}
+              />
+              <button
+                onClick={handleAddProject}
+                disabled={addingProject || refreshing}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+              >
+                {addingProject ? 'Loading...' : 'Load Project'}
+              </button>
+            </div>
+            {error && <div className="mt-3 text-sm text-red-600 font-medium">{error}</div>}
+            {currentProject && <div className="mt-3 text-sm text-green-600 font-medium">✓ Current Project: {currentProject}</div>}
           </div>
-        </div>
 
-        {/* Issues Table (filtered by team) */}
-        <div className="mb-8">
-          <IssuesTable issues={managerIssues} />
-        </div>
-
-        {/* Gantt Chart */}
-        <div className="mb-8">
-          {selectedAssignee ? (
-            <GanttChart tasks={selectedTasks} assignee={selectedAssignee} />
-          ) : (
-            <div>
-              <h3 className="text-lg font-medium mb-4">Manager View</h3>
-              <ManagerSummary tasks={managerIssues} />
-              <ManagerGantt tasks={managerIssues} />
+          {loadedProjects.length > 0 && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Loaded Projects:</label>
+              <div className="flex gap-2 flex-col md:flex-row items-start md:items-center flex-wrap">
+                <select
+                  value={currentProject || ''}
+                  onChange={(e) => handleSwitchProject(e.target.value)}
+                  disabled={refreshing}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:bg-gray-100"
+                >
+                  <option value="">-- Select a project --</option>
+                  {loadedProjects.map(project => (
+                    <option key={project} value={project}>{project}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleRefreshProject}
+                  disabled={!currentProject || refreshing}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium flex items-center gap-2"
+                >
+                  {refreshing ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                      Syncing...
+                    </>
+                  ) : (
+                    <>🔄 Sync Changes</>
+                  )}
+                </button>
+              </div>
             </div>
           )}
+
+          {currentProject && (
+            <>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Select Assignee for Gantt Chart:</label>
+              <select
+                value={selectedAssignee}
+                onChange={(e) => setSelectedAssignee(e.target.value)}
+                disabled={refreshing}
+                className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:bg-gray-100"
+              >
+                <option value="">-- Choose Assignee --</option>
+                {assignees.map((assignee) => (
+                  <option key={assignee} value={assignee}>
+                    {assignee}
+                  </option>
+                ))}
+              </select>
+
+              <div className="mt-4 flex items-center gap-4">
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" className="rounded" checked={false} onChange={(e)=>{ /* placeholder for keyboard users */ }} disabled/>
+                  <span className="text-sm text-gray-600">(Tip) Toggle Manager view below to see aggregated lanes</span>
+                </label>
+              </div>
+            </>
+          )}
         </div>
+
+        {/* Empty State - No Project Loaded */}
+        {!currentProject ? (
+          <div className="bg-white rounded-lg shadow-md p-12 text-center">
+            <div className="text-6xl mb-4">📁</div>
+            <h3 className="text-2xl font-semibold text-gray-800 mb-2">No Project Loaded</h3>
+            <p className="text-gray-600 mb-4">Enter a project key above to load issues.</p>
+            <p className="text-sm text-gray-500">Example: Enter "PROJ" to fetch all issues from that project</p>
+          </div>
+        ) : (
+          <>
+            {/* Issues Table */}
+            <div className="mb-8">
+              <IssuesTable issues={allIssues} />
+            </div>
+
+            {/* Gantt Chart */}
+            <div className="mb-8">
+              {selectedAssignee ? (
+                <GanttChart tasks={selectedTasks} assignee={selectedAssignee} />
+              ) : (
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Manager View</h3>
+                  <ManagerSummary tasks={allIssues} />
+                  <ManagerGantt tasks={allIssues} />
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
